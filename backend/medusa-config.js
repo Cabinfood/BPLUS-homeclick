@@ -45,7 +45,11 @@ const medusaConfig = {
           "@medusajs/dashboard",
           "@medusajs/draft-order",
           "@medusajs/draft-order/admin",
-          /^@medusajs\/.*/
+          "@medusajs/admin-sdk",
+          "@medusajs/framework",
+          "@medusajs/medusa",
+          "@medusajs/ui",
+          "@medusajs/utils"
         ]
       }
     }
