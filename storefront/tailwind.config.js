@@ -60,6 +60,7 @@ module.exports = {
       },
       fontFamily: {
         sans: [
+          "TikTok Sans",
           "Inter",
           "-apple-system",
           "BlinkMacSystemFont",

@@ -44,6 +44,10 @@ const nextConfig = {
         protocol: "https",
         hostname: process.env.NEXT_PUBLIC_MINIO_ENDPOINT,
       }] : []),
+      { // Note: Railway bucket storage for media
+        protocol: "https",
+        hostname: "bucket-production-d647.up.railway.app",
+      },
     ],
   },
   serverRuntimeConfig: {
