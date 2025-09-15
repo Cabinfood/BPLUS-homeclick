@@ -40,6 +40,16 @@ export const getProductByHandle = cache(async function (
     .then(({ products }) => products[0])
 })
 
+// Create a more specific cache key based on query parameters
+const createCacheKey = (params: any) => {
+  return JSON.stringify({
+    ...params,
+    // Sort keys for consistent cache keys
+    ...(params.category_id && { category_id: params.category_id.sort() }),
+    ...(params.collection_id && { collection_id: params.collection_id.sort() }),
+  })
+}
+
 export const getProductsList = cache(async function ({
   pageParam = 1,
   queryParams,
@@ -64,16 +74,28 @@ export const getProductsList = cache(async function ({
       nextPage: null,
     }
   }
+
+  const cacheKey = createCacheKey({ 
+    limit, 
+    offset, 
+    region_id: region.id, 
+    ...queryParams 
+  })
+
   return sdk.store.product
     .list(
       {
         limit,
         offset,
         region_id: region.id,
-        fields: "*variants.calculated_price",
+        fields: "*variants.calculated_price,+variants.inventory_quantity",
         ...queryParams,
       },
-      { next: { tags: ["products"] } }
+      { 
+        next: { 
+          tags: ["products", `products-${cacheKey}`]
+        } 
+      }
     )
     .then(({ products, count }) => {
       const nextPage = count > offset + limit ? pageParam + 1 : null
@@ -109,24 +131,32 @@ export const getProductsListWithSort = cache(async function ({
   queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
 }> {
   const limit = queryParams?.limit || 12
+  const region = await getRegion(countryCode)
 
-  const {
-    response: { products, count },
-  } = await getProductsList({
-    pageParam: 1,
-    queryParams: {
-      ...queryParams,
-      limit: 100,
-    },
-    countryCode,
-  })
+  if (!region) {
+    return {
+      response: { products: [], count: 0 },
+      nextPage: null,
+    }
+  }
+
+  // Fetch products with full pricing data to avoid N+1 queries
+  const { products, count } = await sdk.store.product
+    .list(
+      {
+        limit: 100,
+        offset: 0,
+        region_id: region.id,
+        fields: "*variants.calculated_price,+variants.inventory_quantity",
+        ...queryParams,
+      },
+      { next: { tags: ["products"] } }
+    )
 
   const sortedProducts = sortProducts(products, sortBy)
 
   const pageParam = (page - 1) * limit
-
   const nextPage = count > pageParam + limit ? page + 1 : null
-
   const paginatedProducts = sortedProducts.slice(pageParam, pageParam + limit)
 
   return {

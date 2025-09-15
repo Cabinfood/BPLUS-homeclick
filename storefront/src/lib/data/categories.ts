@@ -1,11 +1,11 @@
 import { sdk } from "@lib/config"
 import { cache } from "react"
 
-export const listCategories = cache(async function () {
+export const listCategories = async function () {
   return sdk.store.category
-    .list({ fields: "+category_children" }, { next: { tags: ["categories"] } })
+    .list({ fields: "+category_children" }, { cache: 'no-store' })
     .then(({ product_categories }) => product_categories)
-})
+}
 
 export const getCategoriesList = cache(async function (
   offset: number = 0,

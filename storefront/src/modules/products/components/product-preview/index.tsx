@@ -4,7 +4,6 @@ import { getProductPrice } from "@lib/util/get-product-price"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import Thumbnail from "../thumbnail"
 import PreviewPrice from "./price"
-import { getProductsById } from "@lib/data/products"
 import { HttpTypes } from "@medusajs/types"
 
 export default async function ProductPreview({
@@ -16,34 +15,59 @@ export default async function ProductPreview({
   isFeatured?: boolean
   region: HttpTypes.StoreRegion
 }) {
-  const [pricedProduct] = await getProductsById({
-    ids: [product.id!],
-    regionId: region.id,
-  })
-
-  if (!pricedProduct) {
-    return null
-  }
-
+  // Product already has pricing data from the list API call
+  // No need for additional API call here
   const { cheapestPrice } = getProductPrice({
-    product: pricedProduct,
+    product,
   })
 
   return (
     <LocalizedClientLink href={`/products/${product.handle}`} className="group">
-      <div data-testid="product-wrapper">
-        <Thumbnail
-          thumbnail={product.thumbnail}
-          images={product.images}
-          size="full"
-          isFeatured={isFeatured}
-        />
-        <div className="flex txt-compact-medium mt-4 justify-between">
-          <Text className="text-ui-fg-subtle" data-testid="product-title">
+      <div 
+        data-testid="product-wrapper" 
+        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.01] transition-all duration-500 hover:-translate-y-[2px] flex flex-col h-full"
+      >
+        {/* Product Image Container */}
+        <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-xl min-h-[200px]">
+          <Thumbnail
+            thumbnail={product.thumbnail}
+            images={product.images}
+            size="square"
+            isFeatured={isFeatured}
+          />
+        </div>
+        
+        {/* Product Info */}
+        <div className="space-y-3">
+          {/* Product Title */}
+          <Text 
+            className="text-gray-900 font-semibold text-lg leading-tight" 
+            data-testid="product-title"
+          >
             {product.title}
           </Text>
-          <div className="flex items-center gap-x-2">
-            {cheapestPrice && <PreviewPrice price={cheapestPrice} />}
+          
+          {/* Product Description/Subtitle */}
+          {product.subtitle && (
+            <Text className="text-gray-600 text-sm">
+              {product.subtitle}
+            </Text>
+          )}
+          
+          {/* Price */}
+          <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center gap-x-2">
+              {cheapestPrice && (
+                <div className="text-gray-900 font-semibold text-lg">
+                  <PreviewPrice price={cheapestPrice} />
+                </div>
+              )}
+            </div>
+            
+            {/* Buy Button */}
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+              Mua
+            </button>
           </div>
         </div>
       </div>

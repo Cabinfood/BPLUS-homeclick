@@ -4,18 +4,15 @@ import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-g
 import RefinementList from "@modules/store/components/refinement-list"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 
-import PaginatedProducts from "./paginated-products"
+import LoadMoreProductsTemplate from "./loadmore-products"
 
 const StoreTemplate = ({
   sortBy,
-  page,
   countryCode,
 }: {
   sortBy?: SortOptions
-  page?: string
   countryCode: string
 }) => {
-  const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
 
   return (
@@ -29,9 +26,8 @@ const StoreTemplate = ({
           <h1 data-testid="store-page-title">All products</h1>
         </div>
         <Suspense fallback={<SkeletonProductGrid />}>
-          <PaginatedProducts
+          <LoadMoreProductsTemplate
             sortBy={sort}
-            page={pageNumber}
             countryCode={countryCode}
           />
         </Suspense>

@@ -1,14 +1,14 @@
 "use client"
 
 import { notFound } from "next/navigation"
-import { Suspense, useCallback } from "react"
+import { Suspense, useCallback, useMemo } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import InteractiveLink from "@modules/common/components/interactive-link"
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import SortDropdown from "@modules/store/components/sort-dropdown"
-import PaginatedProducts from "@modules/store/templates/paginated-products"
+import LoadMoreProductsTemplate from "@modules/store/templates/loadmore-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import Breadcrumb, { BreadcrumbItem } from "@modules/common/components/breadcrumb"
 import { HttpTypes } from "@medusajs/types"
@@ -16,19 +16,16 @@ import { HttpTypes } from "@medusajs/types"
 export default function CategoryTemplate({
   categories,
   sortBy,
-  page,
   countryCode,
 }: {
   categories: HttpTypes.StoreProductCategory[]
   sortBy?: SortOptions
-  page?: string
   countryCode: string
 }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
 
   const category = categories[categories.length - 1]
@@ -36,15 +33,15 @@ export default function CategoryTemplate({
 
   if (!category || !countryCode) notFound()
 
-  // Build breadcrumb items
-  const breadcrumbItems: BreadcrumbItem[] = [
+  // Build breadcrumb items - memoized to prevent re-renders
+  const breadcrumbItems: BreadcrumbItem[] = useMemo(() => [
     { label: "Trang chủ", href: "/" },
     ...parents.map((parent) => ({
       label: parent.name,
       href: `/categories/${parent.handle}`,
     })),
     { label: category.name }, // Current category (no href)
-  ]
+  ], [parents, category.name])
 
   const createQueryString = useCallback(
     (name: string, value: string) => {
@@ -55,10 +52,13 @@ export default function CategoryTemplate({
     [searchParams]
   )
 
-  const setQueryParams = (name: string, value: string) => {
-    const query = createQueryString(name, value)
-    router.push(`${pathname}?${query}`)
-  }
+  const setQueryParams = useCallback(
+    (name: string, value: string) => {
+      const query = createQueryString(name, value)
+      router.push(`${pathname}?${query}`)
+    },
+    [createQueryString, router, pathname]
+  )
 
   return (
     <div className="py-6 content-container" data-testid="category-container">
@@ -93,9 +93,8 @@ export default function CategoryTemplate({
           </div>
         )}
         <Suspense fallback={<SkeletonProductGrid />}>
-          <PaginatedProducts
+          <LoadMoreProductsTemplate
             sortBy={sort}
-            page={pageNumber}
             categoryId={category.id}
             countryCode={countryCode}
           />
