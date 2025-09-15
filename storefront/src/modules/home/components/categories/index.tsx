@@ -1,40 +1,14 @@
 import { Heading } from "@medusajs/ui"
 import { ChevronRight } from "@medusajs/icons"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import { listCategories } from "@lib/data/categories"
+import { HttpTypes } from "@medusajs/types"
 
-const Categories = () => {
-  const categories = [
-    {
-      id: 1,
-      name: "Sofa",
-      handle: "sofa",
-      image: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-      id: 2,
-      name: "Chairs",
-      handle: "chairs",
-      image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-      id: 3,
-      name: "Coffee & Side Tables",
-      handle: "coffee-side-tables",
-      image: "https://images.unsplash.com/photo-1549497538-303791108f95?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-      id: 4,
-      name: "Lighting",
-      handle: "lighting",
-      image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    },
-    {
-      id: 5,
-      name: "Decorations",
-      handle: "decorations",
-      image: "https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
-    }
-  ]
+const Categories = async () => {
+  const categories = await listCategories()
+
+  // Filter to show only parent categories (no parent_category_id)
+  const parentCategories = categories?.filter(category => !category.parent_category_id) || []
 
   return (
     <section className="w-full py-12 px-4">
@@ -68,7 +42,7 @@ const Categories = () => {
         {/* Categories Grid */}
         <div className="relative">
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-            {categories.map((category) => (
+            {parentCategories.map((category) => (
               <LocalizedClientLink
                 key={category.id}
                 href={`/categories/${category.handle}`}
@@ -77,11 +51,19 @@ const Categories = () => {
                 <div className="w-32 md:w-40 text-center">
                   {/* Category Image */}
                   <div className="w-20 h-20 md:w-24 md:h-24 mx-auto mb-3 rounded-2xl overflow-hidden bg-gray-100 group-hover:scale-105 transition-transform duration-200">
-                    <img
-                      src={category.image}
-                      alt={category.name}
-                      className="w-full h-full object-cover"
-                    />
+                    {category.metadata?.image_url ? (
+                      <img
+                        src={category.metadata.image_url as string}
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                        <span className="text-2xl font-bold text-gray-400">
+                          {category.name?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Category Name */}

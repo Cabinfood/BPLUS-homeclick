@@ -1,12 +1,16 @@
+"use client"
+
 import { notFound } from "next/navigation"
-import { Suspense } from "react"
+import { Suspense, useCallback } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import InteractiveLink from "@modules/common/components/interactive-link"
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
-import RefinementList from "@modules/store/components/refinement-list"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
+import SortDropdown from "@modules/store/components/sort-dropdown"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import Breadcrumb, { BreadcrumbItem } from "@modules/common/components/breadcrumb"
 import { HttpTypes } from "@medusajs/types"
 
 export default function CategoryTemplate({
@@ -20,6 +24,10 @@ export default function CategoryTemplate({
   page?: string
   countryCode: string
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
   const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
 
@@ -28,28 +36,43 @@ export default function CategoryTemplate({
 
   if (!category || !countryCode) notFound()
 
+  // Build breadcrumb items
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: "Trang chủ", href: "/" },
+    ...parents.map((parent) => ({
+      label: parent.name,
+      href: `/categories/${parent.handle}`,
+    })),
+    { label: category.name }, // Current category (no href)
+  ]
+
+  const createQueryString = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams)
+      params.set(name, value)
+      return params.toString()
+    },
+    [searchParams]
+  )
+
+  const setQueryParams = (name: string, value: string) => {
+    const query = createQueryString(name, value)
+    router.push(`${pathname}?${query}`)
+  }
+
   return (
-    <div
-      className="flex flex-col small:flex-row small:items-start py-6 content-container"
-      data-testid="category-container"
-    >
-      <RefinementList sortBy={sort} data-testid="sort-by-container" />
+    <div className="py-6 content-container" data-testid="category-container">
       <div className="w-full">
-        <div className="flex flex-row mb-8 text-2xl-semi gap-4">
-          {parents &&
-            parents.map((parent) => (
-              <span key={parent.id} className="text-ui-fg-subtle">
-                <LocalizedClientLink
-                  className="mr-4 hover:text-black"
-                  href={`/categories/${parent.handle}`}
-                  data-testid="sort-by-link"
-                >
-                  {parent.name}
-                </LocalizedClientLink>
-                /
-              </span>
-            ))}
-          <h1 data-testid="category-page-title">{category.name}</h1>
+        <Breadcrumb items={breadcrumbItems} className="mb-4" />
+        <div className="flex flex-col small:flex-row small:items-center small:justify-between mb-8 gap-4">
+          <h1 className="text-2xl-semi" data-testid="category-page-title">
+            {category.name}
+          </h1>
+          <SortDropdown 
+            sortBy={sort as SortOptions} 
+            setQueryParams={setQueryParams}
+            data-testid="sort-by-container" 
+          />
         </div>
         {category.description && (
           <div className="mb-8 text-base-regular">

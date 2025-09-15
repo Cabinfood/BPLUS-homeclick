@@ -21,11 +21,11 @@ export function sortProducts(
     // Precompute the minimum price for each product
     sortedProducts.forEach((product) => {
       if (product.variants && product.variants.length > 0) {
-        product._minPrice = Math.min(
-          ...product.variants.map(
-            (variant) => variant?.calculated_price?.calculated_amount || 0
-          )
-        )
+        const prices = product.variants
+          .map((variant) => variant?.calculated_price?.calculated_amount)
+          .filter((price): price is number => price != null && price > 0)
+        
+        product._minPrice = prices.length > 0 ? Math.min(...prices) : Infinity
       } else {
         product._minPrice = Infinity
       }

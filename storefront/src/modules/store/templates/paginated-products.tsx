@@ -1,4 +1,4 @@
-import { getProductsListWithSort } from "@lib/data/products"
+import { getProductsList, getProductsListWithSort } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
 import { Pagination } from "@modules/store/components/pagination"
@@ -48,6 +48,13 @@ export default async function PaginatedProducts({
   if (sortBy === "created_at") {
     queryParams["order"] = "created_at"
   }
+  
+  // Note: MedusaJS doesn't support price sorting via order parameter
+  // We'll handle price sorting client-side for now
+  if (sortBy === "price_asc" || sortBy === "price_desc") {
+    // Don't set order parameter for price sorting
+    delete queryParams["order"]
+  }
 
   const region = await getRegion(countryCode)
 
@@ -57,12 +64,18 @@ export default async function PaginatedProducts({
 
   let {
     response: { products, count },
-  } = await getProductsListWithSort({
-    page,
-    queryParams,
-    sortBy,
-    countryCode,
-  })
+  } = sortBy === "price_asc" || sortBy === "price_desc" 
+    ? await getProductsListWithSort({
+        page,
+        queryParams,
+        sortBy,
+        countryCode,
+      })
+    : await getProductsList({
+        pageParam: page,
+        queryParams,
+        countryCode,
+      })
 
   const totalPages = Math.ceil(count / PRODUCT_LIMIT)
 

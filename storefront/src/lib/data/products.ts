@@ -94,7 +94,7 @@ export const getProductsList = cache(async function ({
  * It will then return the paginated products based on the page and limit parameters.
  */
 export const getProductsListWithSort = cache(async function ({
-  page = 0,
+  page = 1,
   queryParams,
   sortBy = "created_at",
   countryCode,
@@ -113,7 +113,7 @@ export const getProductsListWithSort = cache(async function ({
   const {
     response: { products, count },
   } = await getProductsList({
-    pageParam: 0,
+    pageParam: 1,
     queryParams: {
       ...queryParams,
       limit: 100,
@@ -125,7 +125,7 @@ export const getProductsListWithSort = cache(async function ({
 
   const pageParam = (page - 1) * limit
 
-  const nextPage = count > pageParam + limit ? pageParam + limit : null
+  const nextPage = count > pageParam + limit ? page + 1 : null
 
   const paginatedProducts = sortedProducts.slice(pageParam, pageParam + limit)
 
