@@ -25,10 +25,10 @@ export default async function ProductPreview({
     <LocalizedClientLink href={`/products/${product.handle}`} className="group">
       <div 
         data-testid="product-wrapper" 
-        className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.01] transition-all duration-500 hover:-translate-y-[2px] flex flex-col h-full"
+        className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 hover:shadow-lg hover:scale-[1.01] transition-all duration-500 hover:-translate-y-[2px] flex flex-col h-full"
       >
         {/* Product Image Container */}
-        <div className="flex-1 flex items-center justify-center bg-gray-50 rounded-xl min-h-[200px]">
+        <div className="flex-1 flex  rounded-xl min-h-[200px]">
           <Thumbnail
             thumbnail={product.thumbnail}
             images={product.images}
@@ -38,10 +38,10 @@ export default async function ProductPreview({
         </div>
         
         {/* Product Info */}
-        <div className="space-y-3">
+        <div className="space-y-1">
           {/* Product Title */}
           <Text 
-            className="text-gray-900 font-semibold text-lg leading-tight" 
+            className="text-gray-900 font-medium text-base leading-tight py-4" 
             data-testid="product-title"
           >
             {product.title}
@@ -58,14 +58,14 @@ export default async function ProductPreview({
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-x-2">
               {cheapestPrice && (
-                <div className="text-gray-900 font-semibold text-lg">
+                <div className="text-black font-regular text-base">
                   <PreviewPrice price={cheapestPrice} />
                 </div>
               )}
             </div>
             
             {/* Buy Button */}
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-regular transition-colors duration-200">
               Mua
             </button>
           </div>

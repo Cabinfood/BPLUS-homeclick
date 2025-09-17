@@ -25,9 +25,9 @@ const Thumbnail: React.FC<ThumbnailProps> = ({
   const initialImage = thumbnail || images?.[0]?.url
 
   return (
-    <Container
+    <div
       className={clx(
-        "relative w-full overflow-hidden rounded-large transition-shadow ease-in-out duration-150",
+        "relative w-full overflow-hidden rounded-large ease-in-out duration-150 border-0 !border-none",
         className,
         {
           "aspect-[11/14]": isFeatured,
@@ -42,7 +42,7 @@ const Thumbnail: React.FC<ThumbnailProps> = ({
       data-testid={dataTestid}
     >
       <ImageOrPlaceholder image={initialImage} size={size} />
-    </Container>
+    </div>
   )
 }
 
