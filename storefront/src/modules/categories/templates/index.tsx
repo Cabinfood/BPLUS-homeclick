@@ -1,78 +1,76 @@
-"use client"
-
 import { notFound } from "next/navigation"
-import { Suspense, useCallback, useMemo } from "react"
-import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import InteractiveLink from "@modules/common/components/interactive-link"
-import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
+import RefinementList from "@modules/store/components/refinement-list"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
-import SortDropdown from "@modules/store/components/sort-dropdown"
-import LoadMoreProductsTemplate from "@modules/store/templates/loadmore-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import Breadcrumb, { BreadcrumbItem } from "@modules/common/components/breadcrumb"
 import { HttpTypes } from "@medusajs/types"
+import LoadMoreProducts from "@modules/store/components/loadmore-products"
+import { getProductsListWithSortByCategoryId } from "@lib/data/products"
+import { getRegion } from "@lib/data/regions"
 
-export default function CategoryTemplate({
-  categories,
+export default async function CategoryTemplate({
+  category,
   sortBy,
+  page,
   countryCode,
 }: {
-  categories: HttpTypes.StoreProductCategory[]
+  category: HttpTypes.StoreProductCategory
   sortBy?: SortOptions
+  page?: string
   countryCode: string
 }) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
   const sort = sortBy || "created_at"
-
-  const category = categories[categories.length - 1]
-  const parents = categories.slice(0, categories.length - 1)
 
   if (!category || !countryCode) notFound()
 
-  // Build breadcrumb items - memoized to prevent re-renders
-  const breadcrumbItems: BreadcrumbItem[] = useMemo(() => [
-    { label: "Trang chủ", href: "/" },
-    ...parents.map((parent) => ({
-      label: parent.name,
-      href: `/categories/${parent.handle}`,
-    })),
-    { label: category.name }, // Current category (no href)
-  ], [parents, category.name])
+  // Get region and initial products data
+  const [region, initialProductsData] = await Promise.all([
+    getRegion(countryCode),
+    getProductsListWithSortByCategoryId({
+      categoryId: category.id,
+      page: 1,
+      sortBy: sort,
+      countryCode,
+      queryParams: { limit: 12 }
+    })
+  ])
 
-  const createQueryString = useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams)
-      params.set(name, value)
-      return params.toString()
-    },
-    [searchParams]
-  )
+  if (!region) notFound()
 
-  const setQueryParams = useCallback(
-    (name: string, value: string) => {
-      const query = createQueryString(name, value)
-      router.push(`${pathname}?${query}`)
-    },
-    [createQueryString, router, pathname]
-  )
+  const parents = [] as HttpTypes.StoreProductCategory[]
+
+  const getParents = (category: HttpTypes.StoreProductCategory) => {
+    if (category.parent_category) {
+      parents.push(category.parent_category)
+      getParents(category.parent_category)
+    }
+  }
+
+  getParents(category)
 
   return (
-    <div className="py-6 content-container" data-testid="category-container">
+    <div
+      className="flex flex-col small:flex-row small:items-start py-6 content-container"
+      data-testid="category-container"
+    >
+      <RefinementList sortBy={sort} data-testid="sort-by-container" />
       <div className="w-full">
-        <Breadcrumb items={breadcrumbItems} className="mb-4" />
-        <div className="flex flex-col small:flex-row small:items-center small:justify-between mb-8 gap-4">
-          <h1 className="text-2xl-semi" data-testid="category-page-title">
-            {category.name}
-          </h1>
-          <SortDropdown 
-            sortBy={sort as SortOptions} 
-            setQueryParams={setQueryParams}
-            data-testid="sort-by-container" 
-          />
+        <div className="flex flex-row mb-8 text-2xl-semi gap-4">
+          {parents &&
+            parents.map((parent) => (
+              <span key={parent.id} className="text-ui-fg-subtle">
+                <LocalizedClientLink
+                  className="mr-4 hover:text-black"
+                  href={`/categories/${parent.handle}`}
+                  data-testid="sort-by-link"
+                >
+                  {parent.name}
+                </LocalizedClientLink>
+                /
+              </span>
+            ))}
+          <h1 data-testid="category-page-title">{category.name}</h1>
         </div>
         {category.description && (
           <div className="mb-8 text-base-regular">
@@ -92,13 +90,14 @@ export default function CategoryTemplate({
             </ul>
           </div>
         )}
-        <Suspense fallback={<SkeletonProductGrid />}>
-          <LoadMoreProductsTemplate
-            sortBy={sort}
-            categoryId={category.id}
-            countryCode={countryCode}
-          />
-        </Suspense>
+        <LoadMoreProducts
+          sortBy={sort}
+          categoryId={category.id}
+          countryCode={countryCode}
+          initialProducts={initialProductsData.response.products}
+          initialCount={initialProductsData.response.count}
+          region={region}
+        />
       </div>
     </div>
   )

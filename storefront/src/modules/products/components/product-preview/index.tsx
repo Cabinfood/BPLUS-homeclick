@@ -6,7 +6,7 @@ import Thumbnail from "../thumbnail"
 import PreviewPrice from "./price"
 import { HttpTypes } from "@medusajs/types"
 
-export default async function ProductPreview({
+export default function ProductPreview({
   product,
   isFeatured,
   region,

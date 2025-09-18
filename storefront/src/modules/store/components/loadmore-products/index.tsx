@@ -1,28 +1,15 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
-import { getProductsList, getProductsListWithSort } from "@lib/data/products"
-import { getRegion } from "@lib/data/regions"
+import { useState, useCallback, useEffect } from "react"
+import { getProductsListWithSortByCategoryId } from "@lib/data/products"
 import ProductPreview from "@modules/products/components/product-preview"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import { HttpTypes } from "@medusajs/types"
 import LoadMoreButton from "@modules/store/components/loadmore-button"
 
-const PRODUCT_LIMIT = 12
-
-type LoadMoreProductsParams = {
-  limit: number
-  collection_id?: string[]
-  category_id?: string[]
-  id?: string[]
-  order?: string
-}
-
 interface LoadMoreProductsProps {
   sortBy?: SortOptions
-  collectionId?: string
-  categoryId?: string
-  productsIds?: string[]
+  categoryId: string
   countryCode: string
   initialProducts: HttpTypes.StoreProduct[]
   initialCount: number
@@ -30,10 +17,8 @@ interface LoadMoreProductsProps {
 }
 
 export default function LoadMoreProducts({
-  sortBy,
-  collectionId,
+  sortBy = "created_at",
   categoryId,
-  productsIds,
   countryCode,
   initialProducts,
   initialCount,
@@ -44,42 +29,7 @@ export default function LoadMoreProducts({
   const [currentPage, setCurrentPage] = useState(1)
   const [totalCount, setTotalCount] = useState(initialCount)
 
-  // Memoize query params to prevent unnecessary re-renders
-  const queryParams: LoadMoreProductsParams = useMemo(() => {
-    const params: LoadMoreProductsParams = {
-      limit: PRODUCT_LIMIT,
-    }
-
-    if (collectionId) {
-      params["collection_id"] = [collectionId]
-    }
-
-    if (categoryId) {
-      params["category_id"] = [categoryId]
-    }
-
-    if (productsIds) {
-      params["id"] = productsIds
-    }
-
-    if (sortBy === "created_at") {
-      params["order"] = "created_at"
-    }
-    
-    // Note: MedusaJS doesn't support price sorting via order parameter
-    // We'll handle price sorting client-side for now
-    if (sortBy === "price_asc" || sortBy === "price_desc") {
-      // Don't set order parameter for price sorting
-      delete params["order"]
-    }
-
-    return params
-  }, [collectionId, categoryId, productsIds, sortBy])
-
-  // Calculate hasMore based on current products length
-  const hasMore = useMemo(() => {
-    return products.length < totalCount
-  }, [products.length, totalCount])
+  const hasMore = products.length < totalCount
 
   const loadMoreProducts = useCallback(async () => {
     if (loading || !hasMore) return
@@ -89,23 +39,24 @@ export default function LoadMoreProducts({
     try {
       const nextPage = currentPage + 1
       
-      const result = sortBy === "price_asc" || sortBy === "price_desc" 
-        ? await getProductsListWithSort({
-            page: nextPage,
-            queryParams,
-            sortBy,
-            countryCode,
-          })
-        : await getProductsList({
-            pageParam: nextPage,
-            queryParams,
-            countryCode,
-          })
+      const result = await getProductsListWithSortByCategoryId({
+        categoryId,
+        page: nextPage,
+        sortBy,
+        countryCode,
+        queryParams: { limit: 12 }
+      })
 
       const newProducts = result.response.products
       
       if (newProducts.length > 0) {
-        setProducts(prev => [...prev, ...newProducts])
+        setProducts(prev => {
+          // Filter out duplicate products by ID
+          const existingIds = new Set(prev.map(p => p.id))
+          const uniqueNewProducts = newProducts.filter(p => !existingIds.has(p.id))
+          
+          return [...prev, ...uniqueNewProducts]
+        })
         setCurrentPage(nextPage)
         setTotalCount(result.response.count)
       }
@@ -114,26 +65,14 @@ export default function LoadMoreProducts({
     } finally {
       setLoading(false)
     }
-  }, [loading, hasMore, currentPage, sortBy, queryParams, countryCode])
+  }, [loading, hasMore, currentPage, sortBy, categoryId, countryCode, products.length, totalCount])
 
-  // Update products when initial data changes (only when sorting changes)
+  // Reset products when initial data changes (e.g., sorting)
   useEffect(() => {
-    if (JSON.stringify(products) !== JSON.stringify(initialProducts)) {
-      setProducts(initialProducts)
-      setCurrentPage(1)
-      setTotalCount(initialCount)
-    }
-  }, [initialProducts, initialCount])
-
-  // Separate effect for sortBy changes to prevent unnecessary resets
-  useEffect(() => {
-    if (products.length > initialProducts.length) {
-      // If we have loaded more products, reset to initial state when sort changes
-      setProducts(initialProducts)
-      setCurrentPage(1)
-      setTotalCount(initialCount)
-    }
-  }, [sortBy, initialProducts, initialCount])
+    setProducts(initialProducts)
+    setCurrentPage(1)
+    setTotalCount(initialCount)
+  }, [initialProducts, initialCount, sortBy]) // Reset when sortBy changes
 
   return (
     <>

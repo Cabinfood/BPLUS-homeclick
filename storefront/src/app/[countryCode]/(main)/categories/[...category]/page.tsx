@@ -75,13 +75,16 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     params.category
   )
 
-  if (!product_categories) {
+  if (!product_categories || product_categories.length === 0) {
     notFound()
   }
 
+  // Get the last category in the hierarchy (the most specific one)
+  const category = product_categories[product_categories.length - 1]
+
   return (
     <CategoryTemplate
-      categories={product_categories}
+      category={category}
       sortBy={sortBy}
       countryCode={params.countryCode}
     />

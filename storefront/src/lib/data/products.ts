@@ -45,8 +45,16 @@ const createCacheKey = (params: any) => {
   return JSON.stringify({
     ...params,
     // Sort keys for consistent cache keys
-    ...(params.category_id && { category_id: params.category_id.sort() }),
-    ...(params.collection_id && { collection_id: params.collection_id.sort() }),
+    ...(params.category_id && { 
+      category_id: Array.isArray(params.category_id) 
+        ? params.category_id.sort() 
+        : [params.category_id].sort() 
+    }),
+    ...(params.collection_id && { 
+      collection_id: Array.isArray(params.collection_id) 
+        ? params.collection_id.sort() 
+        : [params.collection_id].sort() 
+    }),
   })
 }
 
@@ -168,3 +176,124 @@ export const getProductsListWithSort = cache(async function ({
     queryParams,
   }
 })
+
+/**
+ * Fetch products by category ID with sorting and pagination support using MedusaJS v2 SDK
+ * This function filters products by category_id and applies client-side sorting
+ */
+export const getProductsListWithSortByCategoryId = cache(async function ({
+  categoryId,
+  page = 1,
+  queryParams,
+  sortBy = "created_at",
+  countryCode,
+}: {
+  categoryId: string
+  page?: number
+  queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
+  sortBy?: SortOptions
+  countryCode: string
+}): Promise<{
+  response: { products: HttpTypes.StoreProduct[]; count: number }
+  nextPage: number | null
+  queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
+}> {
+  const limit = queryParams?.limit || 12
+  const region = await getRegion(countryCode)
+
+  if (!region) {
+    return {
+      response: { products: [], count: 0 },
+      nextPage: null,
+    }
+  }
+
+  // Create cache key for category-specific caching
+  const cacheKey = createCacheKey({ 
+    category_id: categoryId,
+    region_id: region.id,
+    sortBy,
+    ...queryParams 
+  })
+
+  try {
+    // Calculate offset for server-side pagination
+    const offset = (page - 1) * limit
+
+    // For sorting that MedusaJS supports natively, use server-side sorting
+    let orderParam: string | undefined
+    if (sortBy === "created_at") {
+      orderParam = "created_at"
+    }
+    // For price sorting, we'll need client-side sorting since MedusaJS doesn't support it
+
+    if (sortBy === "price_asc" || sortBy === "price_desc") {
+      // For price sorting, fetch more products and sort client-side
+      const { products, count } = await sdk.store.product
+        .list(
+          {
+            category_id: [categoryId],
+            offset: 0,
+            region_id: region.id,
+            fields: "*variants.calculated_price,+variants.inventory_quantity",
+            ...queryParams,
+          },
+          { 
+            next: { 
+              tags: ["products", `products-category-${categoryId}`, `products-${cacheKey}`]
+            } 
+          }
+        )
+
+      // Apply client-side sorting for price
+      const sortedProducts = sortProducts(products, sortBy)
+      const paginatedProducts = sortedProducts.slice(offset, offset + limit)
+
+      return {
+        response: {
+          products: paginatedProducts,
+          count,
+        },
+        nextPage: count > offset + limit ? page + 1 : null,
+        queryParams,
+      }
+    } else {
+      // For other sorting, use server-side pagination
+      const { products, count } = await sdk.store.product
+        .list(
+          {
+            category_id: [categoryId],
+            limit,
+            offset,
+            region_id: region.id,
+            fields: "*variants.calculated_price,+variants.inventory_quantity",
+            ...(orderParam && { order: orderParam }),
+            ...queryParams,
+          },
+          { 
+            next: { 
+              tags: ["products", `products-category-${categoryId}`, `products-${cacheKey}`]
+            } 
+          }
+        )
+
+      return {
+        response: {
+          products,
+          count,
+        },
+        nextPage: count > offset + limit ? page + 1 : null,
+        queryParams,
+      }
+    }
+  } catch (error) {
+    console.error(`Error fetching products for category ${categoryId}:`, error)
+    return {
+      response: { products: [], count: 0 },
+      nextPage: null,
+      queryParams,
+    }
+  }
+})
+
+
