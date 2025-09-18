@@ -17,7 +17,7 @@ export const getProductsById = cache(async function ({
       {
         id: ids,
         region_id: regionId,
-        fields: "*variants.calculated_price,+variants.inventory_quantity",
+        fields: "*variants.calculated_price,+variants.inventory_quantity,+variants.metadata",
       },
       { next: { tags: ["products"] } }
     )
@@ -33,7 +33,7 @@ export const getProductByHandle = cache(async function (
       {
         handle,
         region_id: regionId,
-        fields: "*variants.calculated_price,+variants.inventory_quantity",
+        fields: "*variants.calculated_price,+variants.inventory_quantity,+variants.metadata",
       },
       { next: { tags: ["products"] } }
     )
@@ -96,7 +96,7 @@ export const getProductsList = cache(async function ({
         limit,
         offset,
         region_id: region.id,
-        fields: "*variants.calculated_price,+variants.inventory_quantity",
+        fields: "*variants.calculated_price,+variants.inventory_quantity,+variants.metadata",
         ...queryParams,
       },
       { 
@@ -155,7 +155,7 @@ export const getProductsListWithSort = cache(async function ({
         limit: 100,
         offset: 0,
         region_id: region.id,
-        fields: "*variants.calculated_price,+variants.inventory_quantity",
+        fields: "*variants.calculated_price,+variants.inventory_quantity,+variants.metadata",
         ...queryParams,
       },
       { next: { tags: ["products"] } }
@@ -235,7 +235,7 @@ export const getProductsListWithSortByCategoryId = cache(async function ({
             category_id: [categoryId],
             offset: 0,
             region_id: region.id,
-            fields: "*variants.calculated_price,+variants.inventory_quantity",
+            fields: "*variants.calculated_price,+variants.inventory_quantity,+variants.metadata",
             ...queryParams,
           },
           { 
@@ -266,7 +266,7 @@ export const getProductsListWithSortByCategoryId = cache(async function ({
             limit,
             offset,
             region_id: region.id,
-            fields: "*variants.calculated_price,+variants.inventory_quantity",
+            fields: "*variants.calculated_price,+variants.inventory_quantity,+variants.metadata",
             ...(orderParam && { order: orderParam }),
             ...queryParams,
           },

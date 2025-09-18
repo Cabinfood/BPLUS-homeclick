@@ -3,11 +3,16 @@
 import { HttpTypes } from "@medusajs/types"
 import { Container } from "@medusajs/ui"
 import Image from "next/image"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "@medusajs/icons"
+import { useProductVariant } from "../product-variant-provider"
 
-type ImageGalleryProps = {
-  images: HttpTypes.StoreProductImage[]
+type VariantImage = {
+  url: string
+}
+
+type VariantImageGalleryProps = {
+  product: HttpTypes.StoreProduct
 }
 
 type TabType = "photos" | "video" | "3d"
@@ -25,9 +30,72 @@ const BoxIcon = ({ className }: { className?: string }) => (
   </svg>
 )
 
-const ImageGallery = ({ images }: ImageGalleryProps) => {
+const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("photos")
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const [currentImages, setCurrentImages] = useState<HttpTypes.StoreProductImage[]>([])
+  
+  // Get selected variant from context
+  const { selectedVariant } = useProductVariant()
+
+  // Update images when selected variant changes
+  useEffect(() => {
+    let imagesToShow: HttpTypes.StoreProductImage[] = []
+
+    if (selectedVariant?.metadata) {
+      const variantImages = selectedVariant.metadata.images as VariantImage[] | undefined
+      const variantThumbnail = selectedVariant.metadata.thumbnail as string | undefined
+
+      // Add variant thumbnail first if available
+      if (variantThumbnail) {
+        imagesToShow.push({
+          id: `variant-thumbnail-${selectedVariant.id}`,
+          url: variantThumbnail,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          deleted_at: null,
+          metadata: null,
+          rank: 0
+        })
+      }
+
+      // Add variant images
+      if (variantImages && variantImages.length > 0) {
+        variantImages.forEach((img, index) => {
+          imagesToShow.push({
+            id: `variant-image-${selectedVariant.id}-${index}`,
+            url: img.url,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            deleted_at: null,
+            metadata: null,
+            rank: index + 1
+          })
+        })
+      }
+    }
+
+    // If no variant images, fall back to product images
+    if (imagesToShow.length === 0 && product.images) {
+      imagesToShow = product.images
+    }
+
+    // If still no images and product has thumbnail, use that
+    if (imagesToShow.length === 0 && product.thumbnail) {
+      imagesToShow.push({
+        id: `product-thumbnail-${product.id}`,
+        url: product.thumbnail,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        deleted_at: null,
+        metadata: null,
+        rank: 0
+      })
+    }
+
+    setCurrentImages(imagesToShow)
+    setCurrentImageIndex(0) // Reset to first image when variant changes
+  }, [selectedVariant, product])
 
   const tabs = [
     { id: "photos" as TabType, label: "Photos", icon: null },
@@ -36,21 +104,21 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
   ]
 
   const handlePrevious = () => {
-    if (activeTab === "photos" && images.length > 0) {
-      setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+    if (activeTab === "photos" && currentImages.length > 0) {
+      setCurrentImageIndex((prev) => (prev === 0 ? currentImages.length - 1 : prev - 1))
     }
   }
 
   const handleNext = () => {
-    if (activeTab === "photos" && images.length > 0) {
-      setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+    if (activeTab === "photos" && currentImages.length > 0) {
+      setCurrentImageIndex((prev) => (prev === currentImages.length - 1 ? 0 : prev + 1))
     }
   }
 
   const renderContent = () => {
     switch (activeTab) {
       case "photos":
-        if (images.length === 0) {
+        if (currentImages.length === 0) {
           return (
             <div className="flex items-center justify-center h-full text-ui-fg-muted">
               No images available
@@ -60,7 +128,7 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
         return (
           <div className="relative w-full h-full">
             <Image
-              src={images[currentImageIndex]?.url || ""}
+              src={currentImages[currentImageIndex]?.url || ""}
               alt={`Product image ${currentImageIndex + 1}`}
               fill
               className="object-cover rounded-lg"
@@ -100,7 +168,7 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
           {renderContent()}
           
           {/* Navigation arrows - only show for photos */}
-          {activeTab === "photos" && images.length > 1 && (
+          {activeTab === "photos" && currentImages.length > 1 && (
             <>
               <button
                 onClick={handlePrevious}
@@ -122,9 +190,9 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
       </div>
 
       {/* Thumbnail navigation - only show for photos */}
-      {activeTab === "photos" && images.length > 1 && (
+      {activeTab === "photos" && currentImages.length > 1 && (
         <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {images.map((image, index) => (
+          {currentImages.map((image, index) => (
             <button
               key={image.id}
               onClick={() => setCurrentImageIndex(index)}
@@ -169,4 +237,4 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
   )
 }
 
-export default ImageGallery
+export default VariantImageGallery

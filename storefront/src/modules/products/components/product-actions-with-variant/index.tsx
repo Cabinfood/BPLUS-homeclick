@@ -1,70 +1,35 @@
 "use client"
 
 import { Button } from "@medusajs/ui"
-import { isEqual } from "lodash"
 import { useParams } from "next/navigation"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 
 import { useIntersection } from "@lib/hooks/use-in-view"
 import Divider from "@modules/common/components/divider"
 import OptionSelect from "@modules/products/components/product-actions/option-select"
 
-import MobileActions from "./mobile-actions"
 import ProductPrice from "../product-price"
-import StickyAddToCart from "../sticky-add-to-cart"
+import StickyAddToCartWithVariant from "../sticky-add-to-cart-with-variant"
 import { addToCart } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
+import { useProductVariant } from "../product-variant-provider"
 
-type ProductActionsProps = {
+type ProductActionsWithVariantProps = {
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
   disabled?: boolean
 }
 
-const optionsAsKeymap = (variantOptions: any) => {
-  return variantOptions?.reduce((acc: Record<string, string | undefined>, varopt: any) => {
-    if (varopt.option && varopt.value !== null && varopt.value !== undefined) {
-      acc[varopt.option.title] = varopt.value
-    }
-    return acc
-  }, {})
-}
-
-export default function ProductActions({
+export default function ProductActionsWithVariant({
   product,
   region,
   disabled,
-}: ProductActionsProps) {
-  const [options, setOptions] = useState<Record<string, string | undefined>>({})
+}: ProductActionsWithVariantProps) {
   const [isAdding, setIsAdding] = useState(false)
   const countryCode = useParams().countryCode as string
-
-  // If there is only 1 variant, preselect the options
-  useEffect(() => {
-    if (product.variants?.length === 1) {
-      const variantOptions = optionsAsKeymap(product.variants[0].options)
-      setOptions(variantOptions ?? {})
-    }
-  }, [product.variants])
-
-  const selectedVariant = useMemo(() => {
-    if (!product.variants || product.variants.length === 0) {
-      return
-    }
-
-    return product.variants.find((v) => {
-      const variantOptions = optionsAsKeymap(v.options)
-      return isEqual(variantOptions, options)
-    })
-  }, [product.variants, options])
-
-  // update the options when a variant is selected
-  const setOptionValue = (title: string, value: string) => {
-    setOptions((prev) => ({
-      ...prev,
-      [title]: value,
-    }))
-  }
+  
+  // Use the shared variant context
+  const { selectedVariant, options, setOptionValue } = useProductVariant()
 
   // check if the selected variant is in stock
   const inStock = useMemo(() => {
@@ -150,23 +115,9 @@ export default function ProductActions({
             ? "Out of stock"
             : "Add to cart"}
         </Button>
-        {/* Hide old MobileActions since we're using StickyAddToCart now */}
-        {/* <MobileActions
+        
+        <StickyAddToCartWithVariant
           product={product}
-          variant={selectedVariant}
-          options={options}
-          updateOptions={setOptionValue}
-          inStock={inStock}
-          handleAddToCart={handleAddToCart}
-          isAdding={isAdding}
-          show={!inView}
-          optionsDisabled={!!disabled || isAdding}
-        /> */}
-        <StickyAddToCart
-          product={product}
-          variant={selectedVariant}
-          options={options}
-          updateOptions={setOptionValue}
           inStock={inStock}
           handleAddToCart={handleAddToCart}
           isAdding={isAdding}

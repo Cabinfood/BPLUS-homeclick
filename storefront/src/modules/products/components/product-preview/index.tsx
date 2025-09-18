@@ -2,7 +2,7 @@ import { Text } from "@medusajs/ui"
 
 import { getProductPrice } from "@lib/util/get-product-price"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import Thumbnail from "../thumbnail"
+import VariantThumbnail from "../variant-thumbnail"
 import PreviewPrice from "./price"
 import { HttpTypes } from "@medusajs/types"
 
@@ -29,9 +29,8 @@ export default function ProductPreview({
       >
         {/* Product Image Container */}
         <div className="flex-1 flex  rounded-xl min-h-[200px]">
-          <Thumbnail
-            thumbnail={product.thumbnail}
-            images={product.images}
+          <VariantThumbnail
+            product={product}
             size="square"
             isFeatured={isFeatured}
           />
