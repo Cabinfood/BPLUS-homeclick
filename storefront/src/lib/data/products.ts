@@ -1,3 +1,4 @@
+import { revalidateTag } from 'next/cache';
 import { sdk } from "@lib/config"
 import { HttpTypes } from "@medusajs/types"
 import { cache } from "react"
@@ -28,6 +29,7 @@ export const getProductByHandle = cache(async function (
   handle: string,
   regionId: string
 ) {
+  revalidateTag("products")
   return sdk.store.product
     .list(
       {
