@@ -7,11 +7,32 @@ checkEnvVariables()
  */
 const nextConfig = {
   reactStrictMode: false,
+  transpilePackages: ["three", "@react-three/fiber", "@react-three/drei"],
   eslint: {
     ignoreDuringBuilds: true,
   },
   typescript: {
     ignoreBuildErrors: true,
+  },
+  webpack: (config) => {
+    // Fix for Three.js and React Three Fiber
+    config.module.rules.push({
+      test: /\.(glb|gltf)$/,
+      use: {
+        loader: 'file-loader',
+        options: {
+          publicPath: '/_next/static/',
+          outputPath: 'static/',
+        },
+      },
+    })
+    
+    // Fix for Three.js modules
+    config.resolve.alias = {
+      ...config.resolve.alias,
+    }
+    
+    return config
   },
   images: {
     remotePatterns: [

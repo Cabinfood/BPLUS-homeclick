@@ -14,3 +14,13 @@ export type VariantPrice = {
   price_type: string
   percentage_diff: string
 }
+
+export type VariantImage = {
+  url: string
+}
+
+export type VariantMetadata = {
+  images?: VariantImage[]
+  thumbnail?: string
+  model_url?: string
+}
