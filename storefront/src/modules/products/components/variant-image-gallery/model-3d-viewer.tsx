@@ -1,10 +1,25 @@
-"use client";
-import { Suspense, useRef, useState, useEffect, useCallback, Component, ReactNode, memo } from "react";
+"use client"
+import {
+  Suspense,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+  Component,
+  ReactNode,
+  memo,
+} from "react"
 import { useFrame } from "@react-three/fiber"
-import { OrbitControls, Html, useProgress, useGLTF, Environment } from "@react-three/drei";
-import { Group, MeshStandardMaterial, Vector3, Box3 } from "three";
-import dynamic from "next/dynamic";
-import { Eye, ArrowLeft, ArrowUp, Rotate3D, RotateCcw } from "lucide-react";
+import {
+  OrbitControls,
+  Html,
+  useProgress,
+  useGLTF,
+  Environment,
+} from "@react-three/drei"
+import { Group, Vector3, Box3 } from "three"
+import dynamic from "next/dynamic"
+import { Eye, ArrowLeft, ArrowUp, Rotate3D, RotateCcw } from "lucide-react"
 
 const PERFORMANCE_CONFIG = {
   low: {
@@ -13,7 +28,7 @@ const PERFORMANCE_CONFIG = {
     shadowMap: false,
     maxDistance: 8,
     minDistance: 3,
-    rotationSpeed: 0.05
+    rotationSpeed: 0.05,
   },
   medium: {
     dpr: 1,
@@ -21,28 +36,26 @@ const PERFORMANCE_CONFIG = {
     shadowMap: true,
     maxDistance: 10,
     minDistance: 2,
-    rotationSpeed: 0.1
-  }
-} as const;
+    rotationSpeed: 0.1,
+  },
+} as const
 
-const DEFAULT_MATERIAL_CONFIG = {
-  color: '#f0f0f0',
-  metalness: 0.1,
-  roughness: 0.8,
-  envMapIntensity: 1
-} as const;
+// Removed default material override to preserve GLTF-provided materials
 
-const Canvas = dynamic(() => import('@react-three/fiber').then((mod) => mod.Canvas), {
-  ssr: false,
-  loading: () => (
-    <div className="flex justify-center items-center h-full">
-      <div className="text-center">
-        <div className="mx-auto mb-2 w-8 h-8 rounded-full border-2 border-gray-300 animate-spin border-t-transparent" />
-        <p className="text-sm text-gray-600">Loading 3D viewer...</p>
+const Canvas = dynamic(
+  () => import("@react-three/fiber").then((mod) => mod.Canvas),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex justify-center items-center h-full">
+        <div className="text-center">
+          <div className="mx-auto mb-2 w-8 h-8 rounded-full border-2 border-gray-300 animate-spin border-t-transparent" />
+          <p className="text-sm text-gray-600">Loading 3D viewer...</p>
+        </div>
       </div>
-    </div>
-  )
-});
+    ),
+  }
+)
 
 class ModelErrorBoundary extends Component<
   { children: ReactNode; onError: () => void },
@@ -58,7 +71,7 @@ class ModelErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error) {
-    console.error('3D Model Error:', error)
+    console.error("3D Model Error:", error)
     this.props.onError()
   }
 
@@ -74,32 +87,33 @@ type Model3DViewerProps = {
   modelUrl?: string
   className?: string
   fallbackMessage?: string
-  performanceMode?: 'low' | 'medium' | 'auto'
+  performanceMode?: "low" | "medium" | "auto"
   enableAutoRotate?: boolean
-  enableDefaultMaterial?: boolean
+  defaultRoughness?: number // set default roughness for all mesh materials
 }
 
 type ModelProps = {
   url: string
-  enableDefaultMaterial?: boolean
-  performanceMode?: 'low' | 'medium'
+  performanceMode?: "low" | "medium"
   isAutoRotating?: boolean
+  materialOverrides?: Record<string, string> // nodeName -> materialName
+  defaultRoughness?: number
 }
 
 const usePerformanceMode = () => {
-  const [mode, setMode] = useState<'low' | 'medium'>('medium')
-  
+  const [mode, setMode] = useState<"low" | "medium">("medium")
+
   useEffect(() => {
     const cores = navigator.hardwareConcurrency || 4
     const memory = (navigator as any).deviceMemory || 4
-    
+
     if (cores <= 2 || memory <= 2) {
-      setMode('low')
+      setMode("low")
     } else {
-      setMode('medium')
+      setMode("medium")
     }
   }, [])
-  
+
   return mode
 }
 
@@ -109,7 +123,9 @@ const Loader = memo(() => {
     <Html center>
       <div className="flex flex-col gap-2 items-center">
         <div className="w-8 h-8 rounded-full border-2 border-blue-500 animate-spin border-t-transparent" />
-        <p className="text-sm text-gray-600">Loading 3D model... {Math.round(progress)}%</p>
+        <p className="text-sm text-gray-600 text-nowrap">
+          Loading 3D model... {Math.round(progress)}%
+        </p>
       </div>
     </Html>
   )
@@ -124,96 +140,41 @@ const LoadingState = ({ message }: { message: string }) => (
   </div>
 )
 
-const Model = memo(({ url, enableDefaultMaterial = true, performanceMode = 'medium', isAutoRotating = false }: ModelProps) => {
-  const groupRef = useRef<Group>(null)
-  const [isLoaded, setIsLoaded] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  
-  const gltf = useGLTF(url, true)
-  const scene = gltf.scene
+const Model = memo(
+  ({
+    url,
+    performanceMode = "medium",
+    isAutoRotating = false,
+    materialOverrides,
+  }: ModelProps) => {
+    const model = useGLTF(url, true) as any
+    const scene = model?.scene
+    const error = model?.error
+    const groupRef = useRef<Group>(null)
 
-  useEffect(() => {
-    if (scene && groupRef.current) {
-      try {
-        if (enableDefaultMaterial) {
-          scene.traverse((child: any) => {
-            if (child.isMesh && (!child.material || child.material.color?.getHex() === 0xffffff)) {
-              const material = new MeshStandardMaterial({
-                color: DEFAULT_MATERIAL_CONFIG.color,
-                metalness: DEFAULT_MATERIAL_CONFIG.metalness,
-                roughness: DEFAULT_MATERIAL_CONFIG.roughness,
-                envMapIntensity: DEFAULT_MATERIAL_CONFIG.envMapIntensity
-              })
-              child.material = material
-            }
-          })
-        }
-
-        scene.traverse((child: any) => {
-          if (child.isMesh) {
-            if (performanceMode === 'low') {
-              child.castShadow = false
-              child.receiveShadow = false
-            }
-            
-            if (child.geometry) {
-              child.geometry.computeBoundingBox()
-              child.geometry.computeBoundingSphere()
-            }
-          }
-        })
-
-        const box = new Box3().setFromObject(scene)
-        const size = new Vector3()
-        box.getSize(size)
-        const maxDim = Math.max(size.x, size.y, size.z)
-        const scale = 2 / maxDim
-        
-        groupRef.current.scale.setScalar(scale)
-        groupRef.current.position.set(0, -box.min.y * scale, 0)
-        
-        setIsLoaded(true)
-      } catch (error) {
-        console.error('Error setting up model:', error)
-        setError('Failed to setup model')
-      }
+    if (error) {
+      console.error("Error in Model component:", error)
+      return null
     }
-  }, [scene, enableDefaultMaterial, performanceMode])
 
-  useFrame((state) => {
-    if (groupRef.current && isLoaded && isAutoRotating) {
-      try {
-        const config = PERFORMANCE_CONFIG[performanceMode]
-        groupRef.current.rotation.y = state.clock.elapsedTime * config.rotationSpeed
-      } catch (error) {
-        console.error('Error in animation frame:', error)
-      }
+    if (!scene) {
+      return null
     }
-  })
 
-  if (error) {
-    console.error('Error in Model component:', error)
-    return null
+    return (
+      <group ref={groupRef}>
+        <primitive object={scene} />
+      </group>
+    )
   }
+)
 
-  if (!scene) {
-    return null
-  }
-
-  return (
-    <group ref={groupRef}>
-      <primitive object={scene} />
-    </group>
-  )
-})
-
-const Model3DViewer = ({ 
-  modelUrl, 
+const Model3DViewer = ({
+  modelUrl,
   className = "",
   fallbackMessage = "No 3D model available",
-  performanceMode = 'auto',
+  performanceMode = "auto",
   enableAutoRotate = false,
-  enableDefaultMaterial = true
 }: Model3DViewerProps) => {
   const [hasError, setHasError] = useState(false)
   const [isClient, setIsClient] = useState(false)
@@ -221,17 +182,18 @@ const Model3DViewer = ({
   const [isAutoRotating, setIsAutoRotating] = useState(enableAutoRotate)
   const [isAtDefaultView, setIsAtDefaultView] = useState(true)
   const orbitControlsRef = useRef<any>(null)
-  
+
   const detectedMode = usePerformanceMode()
-  const finalPerformanceMode = performanceMode === 'auto' ? detectedMode : performanceMode
-  
+  const finalPerformanceMode =
+    performanceMode === "auto" ? detectedMode : performanceMode
+
   useEffect(() => {
     setIsClient(true)
   }, [])
 
   useEffect(() => {
     if (!isClient) return
-    
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -240,12 +202,12 @@ const Model3DViewer = ({
       },
       { threshold: 0.1 }
     )
-    
-    const element = document.getElementById('model-viewer-container')
+
+    const element = document.getElementById("model-viewer-container")
     if (element) {
       observer.observe(element)
     }
-    
+
     return () => observer.disconnect()
   }, [isClient])
 
@@ -262,7 +224,7 @@ const Model3DViewer = ({
   }, [])
 
   const toggleAutoRotate = useCallback(() => {
-    setIsAutoRotating(prev => !prev)
+    setIsAutoRotating((prev) => !prev)
   }, [])
 
   const rotateToView = useCallback((azimuth: number, polar: number) => {
@@ -297,8 +259,12 @@ const Model3DViewer = ({
       <div className={`flex justify-center items-center h-full ${className}`}>
         <div className="text-center">
           <div className="flex justify-center items-center mx-auto mb-4 w-16 h-16 bg-gray-100 rounded-lg">
-            <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            <svg
+              className="w-8 h-8 text-gray-400"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
           <p className="text-ui-fg-muted">{fallbackMessage}</p>
@@ -312,12 +278,16 @@ const Model3DViewer = ({
       <div className={`flex justify-center items-center h-full ${className}`}>
         <div className="text-center">
           <div className="flex justify-center items-center mx-auto mb-4 w-16 h-16 bg-red-100 rounded-lg">
-            <svg className="w-8 h-8 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+            <svg
+              className="w-8 h-8 text-red-400"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
             </svg>
           </div>
           <p className="mb-2 text-red-600">Failed to load 3D model</p>
-          <button 
+          <button
             onClick={handleRetry}
             className="text-sm text-blue-600 underline hover:text-blue-800"
           >
@@ -331,22 +301,22 @@ const Model3DViewer = ({
   const config = PERFORMANCE_CONFIG[finalPerformanceMode]
 
   return (
-    <div 
-      id="model-viewer-container" 
+    <div
+      id="model-viewer-container"
       className={`relative w-full h-full group ${className}`}
     >
       {/* Control buttons - simplified */}
-      <div className={
-        `flex absolute right-2 top-4 z-10 flex-col gap-2`
-      }>
+      <div className={`flex absolute right-2 top-4 z-10 flex-col gap-2`}>
         {/* Auto-rotate toggle */}
         <button
           onClick={toggleAutoRotate}
           className={`p-2 rounded-full shadow-lg transition-all duration-300 bg-white/80 hover:bg-white hover:scale-105`}
           title={isAutoRotating ? "Tắt xoay tự động" : "Bật xoay tự động"}
         >
-          <Rotate3D 
-            className={`w-5 h-5 transition-transform duration-200 ${isAutoRotating ? 'text-blue-600' : 'text-gray-600'}`}
+          <Rotate3D
+            className={`w-5 h-5 transition-transform duration-200 ${
+              isAutoRotating ? "text-blue-600" : "text-gray-600"
+            }`}
           />
         </button>
 
@@ -354,24 +324,24 @@ const Model3DViewer = ({
         <button
           onClick={resetView}
           className={`p-2 rounded-full shadow-lg transition-all duration-300 hover:scale-105 ${
-            isAtDefaultView 
-              ? 'bg-gray-200/80 hover:bg-gray-300/80' 
-              : 'bg-white/80 hover:bg-white'
+            isAtDefaultView
+              ? "bg-gray-200/80 hover:bg-gray-300/80"
+              : "bg-white/80 hover:bg-white"
           }`}
-          title={isAtDefaultView ? "Đang ở góc nhìn gốc" : "Reset về góc nhìn gốc"}
+          title={
+            isAtDefaultView ? "Đang ở góc nhìn gốc" : "Reset về góc nhìn gốc"
+          }
         >
-          <RotateCcw 
+          <RotateCcw
             className={`w-5 h-5 transition-colors duration-200 ${
-              isAtDefaultView ? 'text-gray-400' : 'text-gray-600'
+              isAtDefaultView ? "text-gray-400" : "text-gray-600"
             }`}
           />
         </button>
       </div>
 
       {/* Essential view buttons - only 3 most useful */}
-      <div className={
-        `flex absolute right-2 bottom-4 z-10 flex-col gap-2`
-      }>
+      <div className={`flex absolute right-2 bottom-4 z-10 flex-col gap-2`}>
         {/* Front view */}
         <button
           onClick={() => rotateToView(0, Math.PI / 2)}
@@ -401,55 +371,41 @@ const Model3DViewer = ({
       </div>
 
       {isVisible && (
-      <Canvas
-        camera={{ position: [0, 0, 5], fov: 50 }}
-        style={{ background: 'transparent' }}
-        onError={handleError}
-        legacy
-        linear
-        frameloop="demand"
-        gl={{ 
-            antialias: config.antialias,
-          alpha: true,
-          powerPreference: "default"
-        }}
-          dpr={config.dpr}
-      >
-        <ambientLight intensity={0.6} />
-          <directionalLight 
-            position={[10, 10, 5]} 
-            intensity={1}
-            castShadow={config.shadowMap}
-          />
-          
-          {finalPerformanceMode === 'medium' && (
-            <Environment preset="studio" />
+        <Canvas
+          camera={{ position: [0, 0, 5], fov: 50 }}
+          style={{ background: "transparent" }}
+          dpr={[1, 2]}
+        >
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[10, 10, 5]} intensity={1} />
+
+          {finalPerformanceMode === "medium" && (
+            <Environment preset="apartment" />
           )}
-          
-        <Suspense fallback={<Loader />}>
-          <ModelErrorBoundary onError={handleError}>
-              <Model 
-                url={modelUrl} 
-                enableDefaultMaterial={enableDefaultMaterial}
+
+          <Suspense fallback={<Loader />}>
+            <ModelErrorBoundary onError={handleError}>
+              <Model
+                url={modelUrl}
                 performanceMode={finalPerformanceMode}
                 isAutoRotating={isAutoRotating}
               />
-          </ModelErrorBoundary>
-        </Suspense>
-        
-        <OrbitControls
+            </ModelErrorBoundary>
+          </Suspense>
+
+          <OrbitControls
             ref={orbitControlsRef}
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
             minDistance={config.minDistance}
             maxDistance={config.maxDistance}
             autoRotate={isAutoRotating}
             autoRotateSpeed={config.rotationSpeed * 10}
             enableDamping={true}
             dampingFactor={0.05}
-        />
-      </Canvas>
+          />
+        </Canvas>
       )}
     </div>
   )
