@@ -29,35 +29,35 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   return (
     <ProductVariantProvider product={product}>
       <div
-        className="content-container flex flex-col lg:flex-row lg:items-start py-6 relative gap-6"
+        className="flex relative flex-col gap-6 py-6 content-container lg:flex-row lg:items-start"
         data-testid="product-container"
       >
-        {/* Left Column - Product Info (Desktop) / Top Section (Mobile) */}
-        <div className="flex flex-col lg:sticky lg:top-48 lg:py-0 lg:max-w-[350px] w-full gap-y-6 order-2 lg:order-1">
-          <ProductInfo product={product} />
-          <ProductTabs product={product} />
-        </div>
-
-        {/* Center Column - Image Gallery */}
-        <div className="flex-1 relative order-1 lg:order-2">
+        {/* Left Column - Image Gallery (sticky) */}
+        <div className="relative order-1 lg:order-1 lg:sticky lg:top-24 w-full lg:w-[60%] lg:max-h-[calc(100vh-6rem)] lg:overflow-auto">
           <VariantImageGallery product={product} />
         </div>
 
-        {/* Right Column - Product Actions (Desktop only) */}
-        <div className="hidden lg:flex flex-col lg:sticky lg:top-48 lg:py-0 lg:max-w-[350px] w-full gap-y-6 order-3">
-          <ProductOnboardingCta />
-          <ProductActionsWithVariant
-            product={product}
-            region={region}
-          />
-        </div>
+        {/* Right Column - Product Info, Tabs, and Actions */}
+        <div className="flex flex-col gap-y-6 order-2 lg:order-2 w-full lg:w-[40%] lg:max-w-[480px]">
+          <ProductInfo product={product} />
+          <ProductTabs product={product} />
 
-        {/* Mobile Product Actions - Now handled by sticky bottom cart on all devices */}
-        <div className="lg:hidden order-4">
-          <ProductActionsWithVariant
-            product={product}
-            region={region}
-          />
+          {/* Desktop Product Actions */}
+          <div className="hidden flex-col gap-y-6 lg:flex">
+            <ProductOnboardingCta />
+            <ProductActionsWithVariant
+              product={product}
+              region={region}
+            />
+          </div>
+
+          {/* Mobile Product Actions - sticky bottom cart still applies globally */}
+          <div className="lg:hidden">
+            <ProductActionsWithVariant
+              product={product}
+              region={region}
+            />
+          </div>
         </div>
       </div>
 
@@ -65,7 +65,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       <div className="h-20"></div>
 
       <div
-        className="content-container my-16 small:my-32"
+        className="my-16 content-container small:my-32"
         data-testid="related-products-container"
       >
         <Suspense fallback={<SkeletonRelatedProducts />}>

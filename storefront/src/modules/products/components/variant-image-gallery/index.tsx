@@ -6,10 +6,8 @@ import Image from "next/image"
 import { useState, useEffect } from "react"
 import { ChevronLeft, ChevronRight } from "@medusajs/icons"
 import { useProductVariant } from "../product-variant-provider"
-
-type VariantImage = {
-  url: string
-}
+import { VariantImage } from "types/global"
+import Model3dViewer from "./model-3d-viewer"
 
 type VariantImageGalleryProps = {
   product: HttpTypes.StoreProduct
@@ -120,7 +118,7 @@ const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
       case "photos":
         if (currentImages.length === 0) {
           return (
-            <div className="flex items-center justify-center h-full text-ui-fg-muted">
+            <div className="flex justify-center items-center h-full text-ui-fg-muted">
               No images available
             </div>
           )
@@ -139,21 +137,22 @@ const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
         )
       case "video":
         return (
-          <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
+          <div className="flex justify-center items-center h-full bg-gray-100 rounded-lg">
             <div className="text-center">
-              <PlayIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <PlayIcon className="mx-auto mb-4 w-16 h-16 text-gray-400" />
               <p className="text-ui-fg-muted">Video content coming soon</p>
             </div>
           </div>
         )
       case "3d":
+        const modelUrl = product?.metadata?.model_url as string | undefined
+        
         return (
-          <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
-            <div className="text-center">
-              <BoxIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-              <p className="text-ui-fg-muted">3D view coming soon</p>
-            </div>
-          </div>
+          <Model3dViewer 
+            modelUrl={modelUrl}
+            className="h-full"
+            fallbackMessage="No 3D model available for this variant"
+          />
         )
       default:
         return null
@@ -164,7 +163,7 @@ const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
     <div className="flex flex-col w-full">
       {/* Main carousel container */}
       <div className="relative aspect-[4/3] w-full mb-6">
-        <Container className="relative w-full h-full overflow-hidden bg-ui-bg-subtle">
+        <Container className="overflow-hidden relative p-0 w-full h-full bg-ui-bg-subtle group">
           {renderContent()}
           
           {/* Navigation arrows - only show for photos */}
@@ -172,51 +171,54 @@ const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
             <>
               <button
                 onClick={handlePrevious}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all duration-200 z-10"
+                className="flex absolute left-4 top-1/2 z-10 justify-center items-center w-10 h-10 rounded-full shadow-md transition-all duration-200 -translate-y-1/2 bg-white/80 hover:bg-white"
                 aria-label="Previous image"
               >
-                <ChevronLeft className="w-5 h-5 text-gray-700" />
+                <ChevronLeft className="w-4 h-4 text-gray-700" />
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all duration-200 z-10"
+                className="flex absolute right-4 top-1/2 z-10 justify-center items-center w-10 h-10 rounded-full shadow-md transition-all duration-200 -translate-y-1/2 bg-white/80 hover:bg-white"
                 aria-label="Next image"
               >
-                <ChevronRight className="w-5 h-5 text-gray-700" />
+                <ChevronRight className="w-4 h-4 text-gray-700" />
               </button>
             </>
+          )}
+
+          {/* Thumbnail navigation inside main carousel container */}
+          {activeTab === "photos" && currentImages.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 pointer-events-none">
+              <div className="flex overflow-x-auto gap-2 justify-center items-center p-2 w-auto max-w-full transition-all duration-300 ease-out pointer-events-auto group-hover:w-full">
+                {currentImages.map((image, index) => (
+                  <button
+                    key={image.id}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-12 h-12 lg:w-4 lg:h-4 rounded-lg overflow-hidden border transition-all duration-300 ease-out ${
+                      index === currentImageIndex
+                        ? "border-blue-500 ring-2 ring-blue-200"
+                        : "border-white/50 hover:border-white/80 opacity-80"
+                    } group-hover:w-12 group-hover:h-12`}
+                    aria-label={`Go to image ${index + 1}`}
+                  >
+                    <Image
+                      src={image.url || ""}
+                      alt={`Thumbnail ${index + 1}`}
+                      width={128}
+                      height={128}
+                      className="object-cover w-full h-full transition-transform duration-300 ease-out group-hover:scale-100"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
         </Container>
       </div>
 
-      {/* Thumbnail navigation - only show for photos */}
-      {activeTab === "photos" && currentImages.length > 1 && (
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
-          {currentImages.map((image, index) => (
-            <button
-              key={image.id}
-              onClick={() => setCurrentImageIndex(index)}
-              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                index === currentImageIndex
-                  ? "border-blue-500 ring-2 ring-blue-200"
-                  : "border-gray-200 hover:border-gray-300"
-              }`}
-            >
-              <Image
-                src={image.url || ""}
-                alt={`Thumbnail ${index + 1}`}
-                width={64}
-                height={64}
-                className="w-full h-full object-cover"
-              />
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Tab navigation */}
       <div className="flex justify-center">
-        <div className="flex bg-black/80 rounded-full p-1 backdrop-blur-sm">
+        <div className="flex p-1 rounded-full backdrop-blur-sm bg-black/80">
           {tabs.map((tab) => (
             <button
               key={tab.id}

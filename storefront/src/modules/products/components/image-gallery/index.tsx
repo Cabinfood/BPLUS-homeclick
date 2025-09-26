@@ -52,7 +52,7 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
       case "photos":
         if (images.length === 0) {
           return (
-            <div className="flex items-center justify-center h-full text-ui-fg-muted">
+            <div className="flex justify-center items-center h-full text-ui-fg-muted">
               No images available
             </div>
           )
@@ -71,18 +71,18 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
         )
       case "video":
         return (
-          <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
+          <div className="flex justify-center items-center h-full bg-gray-100 rounded-lg">
             <div className="text-center">
-              <PlayIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <PlayIcon className="mx-auto mb-4 w-16 h-16 text-gray-400" />
               <p className="text-ui-fg-muted">Video content coming soon</p>
             </div>
           </div>
         )
       case "3d":
         return (
-          <div className="flex items-center justify-center h-full bg-gray-100 rounded-lg">
+          <div className="flex justify-center items-center h-full bg-gray-100 rounded-lg">
             <div className="text-center">
-              <BoxIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+              <BoxIcon className="mx-auto mb-4 w-16 h-16 text-gray-400" />
               <p className="text-ui-fg-muted">3D view coming soon</p>
             </div>
           </div>
@@ -96,7 +96,7 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
     <div className="flex flex-col w-full">
       {/* Main carousel container */}
       <div className="relative aspect-[4/3] w-full mb-6">
-        <Container className="relative w-full h-full overflow-hidden bg-ui-bg-subtle">
+        <Container className="overflow-hidden relative w-full h-full bg-ui-bg-subtle">
           {renderContent()}
           
           {/* Navigation arrows - only show for photos */}
@@ -104,14 +104,14 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
             <>
               <button
                 onClick={handlePrevious}
-                className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all duration-200 z-10"
+                className="flex absolute left-4 top-1/2 z-10 justify-center items-center w-10 h-10 rounded-full shadow-md transition-all duration-200 -translate-y-1/2 bg-white/80 hover:bg-white"
                 aria-label="Previous image"
               >
                 <ChevronLeft className="w-5 h-5 text-gray-700" />
               </button>
               <button
                 onClick={handleNext}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-all duration-200 z-10"
+                className="flex absolute right-4 top-1/2 z-10 justify-center items-center w-10 h-10 rounded-full shadow-md transition-all duration-200 -translate-y-1/2 bg-white/80 hover:bg-white"
                 aria-label="Next image"
               >
                 <ChevronRight className="w-5 h-5 text-gray-700" />
@@ -123,7 +123,7 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
 
       {/* Thumbnail navigation - only show for photos */}
       {activeTab === "photos" && images.length > 1 && (
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-2">
+        <div className="flex overflow-x-auto gap-2 pb-2 mb-6">
           {images.map((image, index) => (
             <button
               key={image.id}
@@ -139,7 +139,7 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
                 alt={`Thumbnail ${index + 1}`}
                 width={64}
                 height={64}
-                className="w-full h-full object-cover"
+                className="object-cover w-full h-full"
               />
             </button>
           ))}
@@ -148,7 +148,7 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
 
       {/* Tab navigation */}
       <div className="flex justify-center">
-        <div className="flex bg-black/80 rounded-full p-1 backdrop-blur-sm">
+        <div className="flex p-1 rounded-full backdrop-blur-sm bg-black/80">
           {tabs.map((tab) => (
             <button
               key={tab.id}

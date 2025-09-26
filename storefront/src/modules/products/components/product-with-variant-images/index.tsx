@@ -55,12 +55,11 @@ export default function ProductWithVariantImages({
   }, [product.variants, options])
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8">
+    <div className="flex flex-col gap-8 lg:flex-row">
       {/* Image Gallery */}
       <div className="flex-1">
         <VariantImageGallery 
           product={product} 
-          selectedVariant={selectedVariant}
         />
       </div>
 
