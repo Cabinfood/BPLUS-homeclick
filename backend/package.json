@@ -37,13 +37,17 @@
     "@mikro-orm/migrations": "6.4.3",
     "@mikro-orm/postgresql": "6.4.3",
     "@react-email/components": "^0.0.26",
+    "@react-three/drei": "^10.7.6",
+    "@react-three/fiber": "^8.16.6",
     "@rokmohar/medusa-plugin-meilisearch": "1.2.3",
+    "@types/three": "^0.180.0",
     "awilix": "^8.0.1",
     "medusa-variant-images": "^1.1.4",
     "medusajs-launch-utils": "0.0.18",
     "minio": "^8.0.3",
     "pg": "^8.13.1",
     "resend": "4.0.1",
+    "three": "^0.180.0",
     "ulid": "^2.3.0"
   },
   "devDependencies": {
