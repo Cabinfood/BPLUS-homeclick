@@ -8,3 +8,6 @@ const providerExport: ModuleProviderExports = {
 }
 
 export default providerExport
+
+// module key
+export const MINIO_FILE_MODULE = 'minio-file'

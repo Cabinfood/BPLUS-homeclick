@@ -145,9 +145,7 @@ export const UploadPanel = ({
         <div className="inline-block relative mt-2">
           {modelUrl ? (
             <div className="flex gap-2 justify-end w-full">
-              <IconButton size="small">
-                <Copy content={modelUrl} />
-              </IconButton>
+              <Copy content={modelUrl} variant="mini" />
               <IconButton
                 onClick={handleRemoveModel}
                 size="small"
