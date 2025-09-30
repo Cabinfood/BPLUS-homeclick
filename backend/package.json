@@ -42,13 +42,15 @@
     "@rokmohar/medusa-plugin-meilisearch": "1.2.3",
     "@types/three": "^0.180.0",
     "awilix": "^8.0.1",
+    "lucide-react": "^0.544.0",
     "medusa-variant-images": "^1.1.4",
     "medusajs-launch-utils": "0.0.18",
     "minio": "^8.0.3",
     "pg": "^8.13.1",
     "resend": "4.0.1",
     "three": "^0.180.0",
-    "ulid": "^2.3.0"
+    "ulid": "^2.3.0",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@medusajs/test-utils": "2.10.2",

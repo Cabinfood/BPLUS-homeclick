@@ -1,15 +1,23 @@
+// framework
 import React, { Suspense } from "react"
+import { notFound } from "next/navigation"
 
+// shared
+import { HttpTypes } from "@medusajs/types"
+
+// components
 import VariantImageGallery from "@modules/products/components/variant-image-gallery"
 import ProductActionsWithVariant from "@modules/products/components/product-actions-with-variant"
 import ProductOnboardingCta from "@modules/products/components/product-onboarding-cta"
 import ProductTabs from "@modules/products/components/product-tabs"
 import RelatedProducts from "@modules/products/components/related-products"
 import ProductInfo from "@modules/products/templates/product-info"
+import RenderBlocks from "@modules/products/components/render-blocks"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
-import { notFound } from "next/navigation"
-import { HttpTypes } from "@medusajs/types"
 import { ProductVariantProvider } from "@modules/products/components/product-variant-provider"
+
+// data
+import { getContentBlocksByProductId } from "@lib/data/content-block"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -17,13 +25,22 @@ type ProductTemplateProps = {
   countryCode: string
 }
 
-const ProductTemplate: React.FC<ProductTemplateProps> = ({
+const ProductTemplate: React.FC<ProductTemplateProps> = async ({
   product,
   region,
   countryCode,
 }) => {
   if (!product || !product.id) {
     return notFound()
+  }
+
+  // Fetch content blocks for this product
+  let contentBlocks = null
+  try {
+    const response = await getContentBlocksByProductId(product.id)
+    contentBlocks = response.data
+  } catch (error) {
+    console.error('Failed to fetch content blocks:', error)
   }
 
   return (
@@ -60,6 +77,13 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Render content blocks */}
+      {contentBlocks && contentBlocks.length > 0 && (
+        <div className="my-16 content-container small:my-32">
+          <RenderBlocks blocks={contentBlocks} />
+        </div>
+      )}
 
       {/* Add bottom padding to prevent content from being hidden behind sticky cart */}
       <div className="h-20"></div>
