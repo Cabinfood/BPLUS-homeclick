@@ -10,11 +10,9 @@ import ContentBlockModuleService from "../../../modules/content-block/service"
 import {
   ContentBlockQuerySchema,
   ContentBlockRequestBodySchema,
-  CreateContentBlockSchema,
-  CreateContentBlocksSchema,
   type ContentBlockQueryType,
   type ContentBlockRequestBodyType,
-} from "../../../lib/schemas/content-block"
+} from "../../../lib/schemas/content-block";
 
 export async function GET(req: MedusaRequest, res: MedusaResponse): Promise<void> {
   const svc: ContentBlockModuleService = req.scope.resolve(CONTENT_BLOCK_MODULE)
@@ -28,13 +26,30 @@ export async function GET(req: MedusaRequest, res: MedusaResponse): Promise<void
     )
   }
 
-  const { product_id }: ContentBlockQueryType = queryResult.data
+  const { product_id, block_type }: ContentBlockQueryType = queryResult.data
   const selector: any = {}
   if (product_id) selector.product_id = product_id
+  if (block_type) {
+    if (typeof block_type === "string" && block_type.includes(",")) {
+      const parts = block_type
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+      if (parts.length > 0) {
+        selector.block_type = { $in: parts }
+      }
+    } else {
+      selector.block_type = block_type
+    }
+  }
 
   try {
     const anySvc = svc as any
-    const blocks = await anySvc.listContentBlocks(selector)
+    const blocks = await anySvc.listContentBlocks(selector, {
+      order: {
+        rank: "asc",
+      },
+    })
     res.json({ 
       data: blocks ?? [], 
       count: blocks?.length ?? 0 

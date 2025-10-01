@@ -1,12 +1,5 @@
 import React from "react"
-import { TextBlockData } from "../../../types/content-block"
-
-interface TextBlockProps {
-  data: TextBlockData
-  className?: string
-  blockTitle?: string | null
-  blockDescription?: string | null
-}
+import { TextBlockProps } from "./types"
 
 const TextBlock: React.FC<TextBlockProps> = ({ 
   data, 
@@ -18,14 +11,14 @@ const TextBlock: React.FC<TextBlockProps> = ({
     <div className={`text-white ${className}`}>
       {/* Block level title and description */}
       {blockTitle && (
-        <h2 className="text-2xl font-bold mb-3">{blockTitle}</h2>
+        <h2 className="mb-3 text-2xl font-bold">{blockTitle}</h2>
       )}
       {blockDescription && (
-        <p className="text-base text-white/90 mb-4 leading-relaxed">{blockDescription}</p>
+        <p className="mb-4 text-base leading-relaxed text-white/90">{blockDescription}</p>
       )}
       
       {/* Block data title and content */}
-      <h3 className="text-xl font-semibold mb-2">{data.title}</h3>
+      <h3 className="mb-2 text-xl font-semibold">{data.title}</h3>
       <p className="text-sm leading-relaxed">{data.content}</p>
     </div>
   )

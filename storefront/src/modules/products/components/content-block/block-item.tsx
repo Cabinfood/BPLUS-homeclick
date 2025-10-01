@@ -1,14 +1,7 @@
 import React from "react"
-import { ContentBlock, TextBlockData, MediaBlockData } from "../../../types/content-block"
+import { ContentBlock, TextBlockData, MediaBlockData, BlockItemProps } from "./types"
 import TextBlock from "./text-block"
 import MediaBlock from "./media-block"
-
-interface BlockItemProps {
-  block: ContentBlock
-  className?: string
-  isBackground?: boolean
-  showHeader?: boolean
-}
 
 const BlockItem: React.FC<BlockItemProps> = ({ 
   block, 
