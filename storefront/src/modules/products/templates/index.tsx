@@ -12,7 +12,7 @@ import ProductOnboardingCta from "@modules/products/components/product-onboardin
 import ProductTabs from "@modules/products/components/product-tabs"
 import RelatedProducts from "@modules/products/components/related-products"
 import ProductInfo from "@modules/products/templates/product-info"
-import RenderBlocks from "@modules/products/components/render-blocks"
+import RenderBlocks from "@modules/products/components/content-block/render-blocks"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
 import { ProductVariantProvider } from "@modules/products/components/product-variant-provider"
 

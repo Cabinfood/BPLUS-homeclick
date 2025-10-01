@@ -8,37 +8,39 @@ import { CONTENT_BLOCK_MODULE } from "modules/content-block"
 // services/models (local)
 import ContentBlockModuleService from "../../../modules/content-block/service"
 
-// Constants
-const ORDER_BY = {
-  ASC: 'asc',
-  DESC: 'desc'
-} as const
-
-const ERROR_MESSAGES = {
-  INVALID_QUERY: 'product_id is required',
-  INVALID_DATA: 'Invalid query parameters provided'
-} as const
+// shared utils/constants
+import { ContentBlockQuerySchema } from "lib/schemas/content-block"
+import { ORDER_BY } from "lib/constants"
 
 export const GET = async (req: MedusaRequest, res: MedusaResponse) => {
   try {
     // Resolve service via DI token
     const contentBlockModuleService: ContentBlockModuleService = req.scope.resolve(CONTENT_BLOCK_MODULE)
 
-    // Extract and validate query parameters
-    const { product_id } = req.query
+    // Validate query parameters
+    const { product_id, block_type } = ContentBlockQuerySchema.parse(req.query)
 
-    // Validate input parameters
-    if (!product_id) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        ERROR_MESSAGES.INVALID_QUERY
-      )
+    // Build filters
+    const filters: any = {}
+    if (product_id) {
+      filters.product_id = product_id
+    }
+    if (block_type) {
+      if (typeof block_type === "string" && block_type.includes(",")) {
+        const parts = block_type
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+        if (parts.length > 0) {
+          filters.block_type = { $in: parts }
+        }
+      } else {
+        filters.block_type = block_type
+      }
     }
 
-    // Query content blocks by product_id
-    const blocks = await contentBlockModuleService.listContentBlocks({
-      product_id: product_id as string,
-    }, {
+    // Query content blocks
+    const blocks = await contentBlockModuleService.listContentBlocks(filters, {
       order: {
         rank: ORDER_BY.ASC,
       },

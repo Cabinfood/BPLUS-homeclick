@@ -1,17 +1,90 @@
 import { z } from "zod"
 
+// Landing block data schemas - bám sát UI components
+export const HeroBlockDataSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  videoUrl: z.string().url().optional(),
+  imageUrl: z.string().url().optional(),
+  ctaButtons: z.array(z.object({
+    text: z.string(),
+    href: z.string(),
+    variant: z.enum(["primary", "secondary", "transparent", "danger"]).optional(),
+    icon: z.string().optional()
+  })).optional()
+})
+
+export const BentoGridBlockDataSchema = z.object({
+  title: z.string(),
+  items: z.array(z.object({
+    id: z.string(),
+    title: z.string(),
+    description: z.string().optional(),
+    imageUrl: z.string().url().optional(),
+    href: z.string().optional(),
+    size: z.enum(["small", "medium", "large"]).optional()
+  })),
+  moreText: z.string().optional(),
+  moreHref: z.string().optional()
+})
+
+export const FeaturesBlockDataSchema = z.object({
+  title: z.string(),
+  features: z.array(z.object({
+    icon: z.string().optional(),
+    title: z.string(),
+    description: z.string()
+  }))
+})
+
+export const TestimonialsBlockDataSchema = z.object({
+  title: z.string(),
+  testimonials: z.array(z.object({
+    name: z.string(),
+    role: z.string(),
+    content: z.string(),
+    avatar: z.string().url().optional(),
+    rating: z.number().min(1).max(5)
+  }))
+})
+
+export const CTABlockDataSchema = z.object({
+  title: z.string(),
+  description: z.string().optional(),
+  buttons: z.array(z.object({
+    text: z.string(),
+    href: z.string(),
+    variant: z.enum(["primary", "secondary", "transparent", "danger"]).optional(),
+    icon: z.string().optional()
+  })),
+  backgroundImage: z.string().url().optional()
+})
+
+// Union type cho tất cả block data
+export const BlockDataSchema = z.union([
+  HeroBlockDataSchema,
+  BentoGridBlockDataSchema,
+  FeaturesBlockDataSchema,
+  TestimonialsBlockDataSchema,
+  CTABlockDataSchema,
+  z.record(z.string(), z.any()) // Fallback cho existing blocks
+])
+
 // Base content block schema
 export const ContentBlockSchema = z.object({
   id: z.string().optional(),
   title: z.string().nullable().optional(),
   description: z.string().nullable().optional(),
-  block_type: z.string().min(1, "block_type is required"),
-  block_data: z.record(z.string(), z.any()).refine(
-    (data) => data !== null && typeof data === "object" && !Array.isArray(data),
-    {
-      message: "block_data must be an object"
-    }
-  ),
+  block_type: z.enum([
+    "text", 
+    "media", 
+    "hero", 
+    "bento_grid", 
+    "features", 
+    "testimonials", 
+    "cta"
+  ]),
+  block_data: BlockDataSchema,
   rank: z.number().int().min(0).nullable().optional(),
   product_id: z.string().min(1).nullable().optional(),
 })
@@ -19,6 +92,7 @@ export const ContentBlockSchema = z.object({
 // Query parameters schema
 export const ContentBlockQuerySchema = z.object({
   product_id: z.string().optional(),
+  block_type: z.string().optional(),
 })
 
 // Single content block creation schema

@@ -2,33 +2,22 @@
 
 import React, { useState, useEffect } from "react"
 import Image from "next/image"
-import { MediaBlockData } from "../../../types/content-block"
+import { MediaBlockProps } from "./types"
 
-interface MediaBlockProps {
-  data: MediaBlockData
-  className?: string
-  isBackground?: boolean
-  blockTitle?: string | null
-  blockDescription?: string | null
-}
-
-const MediaBlock: React.FC<MediaBlockProps> = ({ 
-  data, 
-  className = "", 
+const MediaBlock: React.FC<MediaBlockProps> = ({
+  data,
+  className = "",
   isBackground = false,
   blockTitle,
-  blockDescription
+  blockDescription,
 }) => {
   const [imageError, setImageError] = useState(false)
   const [imageLoaded, setImageLoaded] = useState(false)
 
-  
-  if (data.type === 'image') {
+  if (data.type === "image") {
     if (isBackground) {
       return (
-        <div 
-          className={`relative min-h-64 ${className}`}
-        >
+        <div className={`relative max-h-96 ${className}`}>
           {!imageError ? (
             <Image
               src={data.url}
@@ -48,31 +37,30 @@ const MediaBlock: React.FC<MediaBlockProps> = ({
         </div>
       )
     }
-    
+
     return (
-      <div className={`relative w-full h-full min-h-64 ${className}`}>
+      <div className={`relative w-full h-full max-h-96 ${className}`}>
         {/* Block level title and description */}
         {(blockTitle || blockDescription) && (
-          <div className="absolute top-0 left-0 z-20 p-6 max-w-md">
+          <div className="absolute top-0 left-0 z-20 p-4 lg:p-9">
             {blockTitle && (
-              <h2 className="mb-2 text-xl font-bold text-white drop-shadow-lg">
+              <h2 className="mb-2 text-lg font-bold text-white drop-shadow-lg lg:text-3xl">
                 {blockTitle}
               </h2>
             )}
             {blockDescription && (
-              <p className="text-sm leading-relaxed drop-shadow-lg text-white/90">
+              <p className="text-sm leading-relaxed drop-shadow-lg lg:text-lg text-white/90">
                 {blockDescription}
               </p>
             )}
           </div>
         )}
-        
-        {!imageError ? (
+
+        {!imageError && imageLoaded ? (
           <Image
             src={data.url}
             alt={data.alt || ""}
-            fill
-            className="object-cover"
+            className="object-cover w-full h-full"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             onError={() => setImageError(true)}
             onLoad={() => setImageLoaded(true)}
@@ -86,25 +74,27 @@ const MediaBlock: React.FC<MediaBlockProps> = ({
     )
   }
 
-  if (data.type === 'video') {
+  if (data.type === "video") {
     return (
-      <div className={`relative w-full h-full min-h-64 ${className}`}>
+      <div
+        className={`overflow-hidden relative w-full h-full max-h-96 ${className}`}
+      >
         {/* Block level title and description */}
         {(blockTitle || blockDescription) && (
-          <div className="absolute top-0 left-0 z-20 p-6 max-w-md">
+          <div className="absolute top-0 left-0 z-20 p-4 lg:p-9">
             {blockTitle && (
-              <h2 className="mb-2 text-xl font-bold text-white drop-shadow-lg">
+              <h4 className="mb-2 text-lg font-bold text-white drop-shadow-lg lg:text-3xl">
                 {blockTitle}
-              </h2>
+              </h4>
             )}
             {blockDescription && (
-              <p className="text-sm leading-relaxed drop-shadow-lg text-white/90">
+              <p className="text-sm leading-relaxed drop-shadow-lg lg:text-lg text-white/90">
                 {blockDescription}
               </p>
             )}
           </div>
         )}
-        
+
         {data.caption && (
           <p className="absolute top-2 right-2 z-10 px-2 py-1 text-lg text-white rounded bg-black/50">
             {data.caption}

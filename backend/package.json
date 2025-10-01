@@ -21,6 +21,9 @@
     "email:dev": "email dev --dir=./src/modules/email-notifications/templates --port=3002"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@medusajs/admin-sdk": "2.10.2",
     "@medusajs/cli": "2.10.2",
     "@medusajs/dashboard": "2.10.2",

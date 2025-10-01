@@ -1,7 +1,7 @@
 // ui
 import { Button, IconButton, Input, Text, Alert, Select } from "@medusajs/ui"
 import { Trash2, Upload, Image, Video } from "lucide-react"
-import { useState } from "react"
+import { useState, memo, useCallback, useEffect } from "react"
 
 export type MediaFileBlockData = {
   type: 'image' | 'video'
@@ -13,6 +13,7 @@ export type MediaFileBlockData = {
 type Props = {
   value: MediaFileBlockData
   onChange: (next: MediaFileBlockData) => void
+  validationError?: string | null
 }
 
 const MEDIA_TYPES = [
@@ -35,11 +36,23 @@ const UPLOAD_BUTTON_LABELS = {
   video: 'Chọn video'
 } as const
 
-export default function MediaFile({ value, onChange }: Props) {
+const MediaFile = memo(function MediaFile({ value, onChange, validationError }: Props) {
   const [isUploading, setIsUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Local state to prevent focus loss
+  const [localUrl, setLocalUrl] = useState(value.url || "")
+  const [localAlt, setLocalAlt] = useState(value.alt || "")
+  const [localCaption, setLocalCaption] = useState(value.caption || "")
 
-  const handleTypeChange = (newType: 'image' | 'video') => {
+  // Sync local state when value changes
+  useEffect(() => {
+    setLocalUrl(value.url || "")
+    setLocalAlt(value.alt || "")
+    setLocalCaption(value.caption || "")
+  }, [value.url, value.alt, value.caption])
+
+  const handleTypeChange = useCallback((newType: 'image' | 'video') => {
     onChange({ 
       ...value, 
       type: newType,
@@ -48,10 +61,14 @@ export default function MediaFile({ value, onChange }: Props) {
       alt: '',
       caption: ''
     })
+    // Update local state to reflect the change
+    setLocalUrl('')
+    setLocalAlt('')
+    setLocalCaption('')
     setError(null)
-  }
+  }, [value, onChange])
 
-  const handleChooseFile = () => {
+  const handleChooseFile = useCallback(() => {
     const input = document.createElement("input")
     input.type = "file"
     input.accept = ACCEPTED_FILE_TYPES[value.type]
@@ -91,7 +108,10 @@ export default function MediaFile({ value, onChange }: Props) {
         // Xử lý response format như category-image-upload
         const uploadedFileUrl = json.files?.[0]?.url
         if (uploadedFileUrl) {
+          // Only update the URL, preserve other fields
           onChange({ ...value, url: uploadedFileUrl })
+          // Update local state to reflect the change
+          setLocalUrl(uploadedFileUrl)
         } else {
           throw new Error("No file URL returned from server")
         }
@@ -104,12 +124,53 @@ export default function MediaFile({ value, onChange }: Props) {
       }
     }
     input.click()
-  }
+  }, [value.type])
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     onChange({ ...value, url: "" })
+    // Update local state to reflect the change
+    setLocalUrl("")
     setError(null)
-  }
+  }, [value, onChange])
+
+  const handleUrlChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalUrl(e.target.value);
+  }, []);
+
+  const handleUrlBlur = useCallback(() => {
+    onChange({ 
+      type: value.type,
+      url: localUrl,
+      alt: value.alt || '',
+      caption: value.caption || ''
+    });
+  }, [value.type, value.alt, value.caption, localUrl, onChange]);
+
+  const handleAltChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalAlt(e.target.value);
+  }, []);
+
+  const handleAltBlur = useCallback(() => {
+    onChange({ 
+      type: value.type,
+      url: value.url,
+      alt: localAlt,
+      caption: value.caption || ''
+    });
+  }, [value.type, value.url, value.caption, localAlt, onChange]);
+
+  const handleCaptionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalCaption(e.target.value);
+  }, []);
+
+  const handleCaptionBlur = useCallback(() => {
+    onChange({ 
+      type: value.type,
+      url: value.url,
+      alt: value.alt || '',
+      caption: localCaption
+    });
+  }, [value.type, value.url, value.alt, localCaption, onChange]);
 
   const currentTypeConfig = MEDIA_TYPES.find(t => t.value === value.type)
   const IconComponent = currentTypeConfig?.icon || Image
@@ -130,8 +191,8 @@ export default function MediaFile({ value, onChange }: Props) {
           onValueChange={handleTypeChange}
           disabled={isUploading}
         >
-          <Select.Trigger>
-            <div className="flex items-center gap-2">
+          <Select.Trigger tabIndex={0}>
+            <div className="flex gap-2 items-center">
               <IconComponent size={16} />
               <span>{currentTypeConfig?.label}</span>
             </div>
@@ -141,7 +202,7 @@ export default function MediaFile({ value, onChange }: Props) {
               const Icon = type.icon
               return (
                 <Select.Item key={type.value} value={type.value}>
-                  <div className="flex items-center gap-2">
+                  <div className="flex gap-2 items-center">
                     <Icon size={16} />
                     <span>{type.label}</span>
                   </div>
@@ -154,27 +215,44 @@ export default function MediaFile({ value, onChange }: Props) {
       
       {/* URL input */}
       <div className="grid gap-1">
-        <Text size="small">URL</Text>
+        <Text size="small" className={validationError ? "text-red-600" : ""}>
+          URL <span className="text-red-500">*</span>
+        </Text>
         <div className="flex gap-2 items-center">
           <Input
-            value={value.url ?? ""}
-            onChange={(e) => onChange({ ...value, url: e.target.value })}
+            value={localUrl}
+            onChange={handleUrlChange}
+            onBlur={handleUrlBlur}
             placeholder={PLACEHOLDERS[value.type]}
             disabled={isUploading}
+            tabIndex={1}
+            autoComplete="url"
           />
           <Button 
             variant="secondary" 
             onClick={handleChooseFile}
             disabled={isUploading}
+            tabIndex={2}
+            type="button"
           >
             {isUploading ? "Đang upload..." : UPLOAD_BUTTON_LABELS[value.type]}
           </Button>
           {value.url && !isUploading ? (
-            <IconButton size="small" onClick={handleClear}>
+            <IconButton 
+              size="small" 
+              onClick={handleClear}
+              tabIndex={3}
+              type="button"
+            >
               <Trash2 className="text-red-500" size={16} />
             </IconButton>
           ) : null}
         </div>
+        {validationError && (
+          <Text size="small" className="text-red-600">
+            {validationError}
+          </Text>
+        )}
       </div>
 
       {/* Alt text - chỉ hiển thị cho image */}
@@ -182,9 +260,12 @@ export default function MediaFile({ value, onChange }: Props) {
         <div className="grid gap-1">
           <Text size="small">Alt</Text>
           <Input
-            value={value.alt ?? ""}
-            onChange={(e) => onChange({ ...value, alt: e.target.value })}
+            value={localAlt}
+            onChange={handleAltChange}
+            onBlur={handleAltBlur}
             placeholder="Mô tả hình ảnh"
+            tabIndex={4}
+            autoComplete="off"
           />
         </div>
       )}
@@ -193,11 +274,16 @@ export default function MediaFile({ value, onChange }: Props) {
       <div className="grid gap-1">
         <Text size="small">Caption</Text>
         <Input
-          value={value.caption ?? ""}
-          onChange={(e) => onChange({ ...value, caption: e.target.value })}
+          value={localCaption}
+          onChange={handleCaptionChange}
+          onBlur={handleCaptionBlur}
           placeholder="Chú thích ngắn"
+          tabIndex={value.type === 'image' ? 5 : 4}
+          autoComplete="off"
         />
       </div>
     </div>
   )
-}
+})
+
+export default MediaFile
