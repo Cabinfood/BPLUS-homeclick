@@ -14,6 +14,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Optimize memory usage
+  experimental: {
+    // Reduce memory by minimizing cache
+    isrMemoryCacheSize: 0, // Disable ISR memory cache (use only filesystem cache)
+  },
+  // Optimize production output
+  productionBrowserSourceMaps: false, // Disable source maps to reduce memory
+  compress: true, // Enable gzip compression
   webpack: (config) => {
     // Fix for Three.js and React Three Fiber
     config.module.rules.push({
