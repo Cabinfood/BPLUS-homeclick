@@ -21,7 +21,13 @@ import {
   MINIO_SECRET_KEY,
   MINIO_BUCKET,
   MEILISEARCH_HOST,
-  MEILISEARCH_ADMIN_KEY
+  MEILISEARCH_ADMIN_KEY,
+  S3_FILE_URL,
+  S3_ACCESS_KEY_ID,
+  S3_SECRET_ACCESS_KEY,
+  S3_REGION,
+  S3_BUCKET,
+  S3_ENDPOINT,
 } from 'lib/constants';
 
 loadEnv(process.env.NODE_ENV, process.cwd());
@@ -64,16 +70,32 @@ const medusaConfig = {
       resolve: '@medusajs/file',
       options: {
         providers: [
-          ...(MINIO_ENDPOINT && MINIO_ACCESS_KEY && MINIO_SECRET_KEY ? [{
+          // Priority 1: Use R2 if configured
+          ...(S3_FILE_URL && S3_ACCESS_KEY_ID && S3_SECRET_ACCESS_KEY ? [{
+            resolve: '@medusajs/file-s3',
+            id: 's3',
+            options: {
+              file_url: S3_FILE_URL,
+              access_key_id: S3_ACCESS_KEY_ID,
+              secret_access_key: S3_SECRET_ACCESS_KEY,
+              region: S3_REGION,
+              bucket: S3_BUCKET,
+              endpoint: S3_ENDPOINT,
+            }
+          }] :
+          // Priority 2: Fallback to MinIO
+          MINIO_ENDPOINT && MINIO_ACCESS_KEY && MINIO_SECRET_KEY ? [{
             resolve: './src/modules/minio-file',
             id: 'minio',
             options: {
               endPoint: MINIO_ENDPOINT,
               accessKey: MINIO_ACCESS_KEY,
               secretKey: MINIO_SECRET_KEY,
-              bucket: MINIO_BUCKET // Optional, default: medusa-media
+              bucket: MINIO_BUCKET
             }
-          }] : [{
+          }] :
+          // Priority 3: Fallback to local
+          [{
             resolve: '@medusajs/file-local',
             id: 'local',
             options: {

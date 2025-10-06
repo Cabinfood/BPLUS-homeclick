@@ -64,8 +64,9 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
               alt={`Product image ${currentImageIndex + 1}`}
               fill
               className="object-cover rounded-lg"
-              priority={currentImageIndex <= 2}
-              sizes="(max-width: 576px) 280px, (max-width: 768px) 360px, (max-width: 992px) 480px, 800px"
+              priority={currentImageIndex === 0}
+              quality={60}
+              sizes="(max-width: 576px) 100vw, (max-width: 768px) 80vw, (max-width: 992px) 60vw, 50vw"
             />
           </div>
         )
@@ -139,6 +140,7 @@ const ImageGallery = ({ images }: ImageGalleryProps) => {
                 alt={`Thumbnail ${index + 1}`}
                 width={64}
                 height={64}
+                quality={40}
                 className="object-cover w-full h-full"
               />
             </button>

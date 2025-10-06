@@ -47,7 +47,7 @@ const nextConfig = {
       {
         protocol: "http",
         hostname: "localhost",
-        
+
       },
       { // Note: needed to serve images from /public folder
         protocol: process.env.NEXT_PUBLIC_BASE_URL?.startsWith('https') ? 'https' : 'http',
@@ -82,6 +82,14 @@ const nextConfig = {
         hostname: "bucket-production-d647.up.railway.app",
       },
     ],
+    // Optimize image loading performance
+    formats: ['image/avif', 'image/webp'], // Use modern formats (30-50% smaller)
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920], // Common device widths
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Thumbnail sizes
+    minimumCacheTTL: 60 * 60 * 24 * 60, // Cache optimized images for 60 days
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   serverRuntimeConfig: {
     port: process.env.PORT || 3000
