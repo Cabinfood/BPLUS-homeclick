@@ -167,6 +167,9 @@ const medusaConfig = {
     {
       resolve: './src/modules/content-block',
     },
+    {
+      resolve: './src/modules/hero-slide',
+    },
   ],
   plugins: [
     {
