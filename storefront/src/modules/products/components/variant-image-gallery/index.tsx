@@ -3,11 +3,13 @@
 import { HttpTypes } from "@medusajs/types"
 import { Container } from "@medusajs/ui"
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense, lazy } from "react"
 import { ChevronLeft, ChevronRight } from "@medusajs/icons"
 import { useProductVariant } from "../product-variant-provider"
 import { VariantImage } from "types/global"
-import Model3dViewer from "./model-3d-viewer"
+
+// Lazy load 3D viewer to reduce initial bundle size and memory
+const Model3dViewer = lazy(() => import("./model-3d-viewer"))
 
 type VariantImageGalleryProps = {
   product: HttpTypes.StoreProduct
@@ -147,12 +149,22 @@ const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
       case "3d":
         const modelUrl = product?.metadata?.model_url as string | undefined
         
+        // Only render 3D viewer when tab is active to save memory
         return (
-          <Model3dViewer 
-            modelUrl={modelUrl}
-            className="h-full"
-            fallbackMessage="No 3D model available for this variant"
-          />
+          <Suspense fallback={
+            <div className="flex justify-center items-center h-full">
+              <div className="text-center">
+                <div className="mx-auto mb-2 w-8 h-8 rounded-full border-2 border-gray-300 animate-spin border-t-transparent" />
+                <p className="text-sm text-gray-600">Loading 3D viewer...</p>
+              </div>
+            </div>
+          }>
+            <Model3dViewer 
+              modelUrl={modelUrl}
+              className="h-full"
+              fallbackMessage="No 3D model available for this variant"
+            />
+          </Suspense>
         )
       default:
         return null

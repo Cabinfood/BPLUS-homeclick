@@ -21,6 +21,7 @@ export default function LandingHero({
 }: LandingHeroProps) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   const [isImageLoaded, setIsImageLoaded] = useState(false)
+  const videoRef = React.useRef<HTMLVideoElement>(null)
 
   // Auto-play video when component mounts
   useEffect(() => {
@@ -28,6 +29,17 @@ export default function LandingHero({
       setIsVideoLoaded(true)
     }
   }, [videoUrl, isLoading])
+
+  // Cleanup: Stop video and free memory on unmount
+  useEffect(() => {
+    return () => {
+      if (videoRef.current) {
+        videoRef.current.pause()
+        videoRef.current.src = ''
+        videoRef.current.load()
+      }
+    }
+  }, [])
 
   // Handle image load
   useEffect(() => {
@@ -68,6 +80,7 @@ export default function LandingHero({
       <div className="absolute inset-0">
         {videoUrl && isVideoLoaded ? (
           <video
+            ref={videoRef}
             autoPlay
             muted
             loop

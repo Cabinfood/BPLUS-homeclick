@@ -162,11 +162,38 @@ const medusaConfig = {
           products: {
             type: 'products',
             enabled: true,
-            fields: ['id', 'title', 'description', 'handle', 'variant_sku', 'thumbnail'],
+            // OPTIMIZED: Reduced fields to only essential ones (was 6, now 4)
+            // Removed: 'description' (heavy), 'variant_sku' (rarely searched)
+            fields: ['id', 'title', 'handle', 'thumbnail'],
             indexSettings: {
-              searchableAttributes: ['title', 'description', 'variant_sku'],
-              displayedAttributes: ['id', 'handle', 'title', 'description', 'variant_sku', 'thumbnail'],
-              filterableAttributes: ['id', 'handle'],
+              // OPTIMIZED: Only index title for search (was 3 fields, now 1)
+              // Title is the most relevant for product search
+              searchableAttributes: ['title'],
+              // OPTIMIZED: Reduced displayed attributes (was 6, now 4)
+              displayedAttributes: ['id', 'handle', 'title', 'thumbnail'],
+              // OPTIMIZED: Only filter by handle (id filtering not needed in search)
+              filterableAttributes: ['handle'],
+              // OPTIMIZED: Add pagination limit to prevent loading too many results
+              pagination: {
+                maxTotalHits: 1000 // Limit total searchable results
+              },
+              // OPTIMIZED: Reduce ranking rules for faster indexing
+              rankingRules: [
+                'words',
+                'typo',
+                'proximity',
+                'attribute',
+                'sort',
+                'exactness'
+              ],
+              // OPTIMIZED: Set typo tolerance to reduce index size
+              typoTolerance: {
+                enabled: true,
+                minWordSizeForTypos: {
+                  oneTypo: 5,
+                  twoTypos: 9
+                }
+              }
             },
             primaryKey: 'id',
           }

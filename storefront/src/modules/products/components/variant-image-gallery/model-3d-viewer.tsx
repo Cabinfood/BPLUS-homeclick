@@ -15,7 +15,6 @@ import {
   Html,
   useProgress,
   useGLTF,
-  Environment,
 } from "@react-three/drei"
 import { Group, Vector3, Box3 } from "three"
 import dynamic from "next/dynamic"
@@ -151,6 +150,30 @@ const Model = memo(
     const scene = model?.scene
     const error = model?.error
     const groupRef = useRef<Group>(null)
+
+    // Cleanup: Dispose 3D resources when component unmounts
+    useEffect(() => {
+      return () => {
+        if (scene) {
+          scene.traverse((object: any) => {
+            if (object.geometry) {
+              object.geometry.dispose()
+            }
+            if (object.material) {
+              if (Array.isArray(object.material)) {
+                object.material.forEach((m: any) => m.dispose())
+              } else {
+                object.material.dispose()
+              }
+            }
+          })
+        }
+        // Clear model from cache to free memory
+        if (url) {
+          useGLTF.clear(url)
+        }
+      }
+    }, [scene, url])
 
     if (error) {
       console.error("Error in Model component:", error)
@@ -376,12 +399,11 @@ const Model3DViewer = ({
           style={{ background: "transparent" }}
           dpr={[1, 2]}
         >
-          <ambientLight intensity={0.6} />
-          <directionalLight position={[10, 10, 5]} intensity={1} />
-
-          {finalPerformanceMode === "medium" && (
-            <Environment preset="apartment" />
-          )}
+          {/* Optimized lighting - removed heavy Environment preset to save ~10-20MB memory */}
+          <ambientLight intensity={0.8} />
+          <directionalLight position={[10, 10, 5]} intensity={1.2} />
+          <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+          <directionalLight position={[0, 10, 0]} intensity={0.3} />
 
           <Suspense fallback={<Loader />}>
             <ModelErrorBoundary onError={handleError}>

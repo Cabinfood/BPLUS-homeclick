@@ -5,7 +5,18 @@ const endpoint =
 
 const apiKey = process.env.NEXT_PUBLIC_SEARCH_API_KEY || "test_key"
 
-export const searchClient = instantMeiliSearch(endpoint, apiKey)
+// OPTIMIZED: Configure search client with memory-efficient settings
+export const searchClient = instantMeiliSearch(endpoint, apiKey, {
+  // Enable caching but with limits
+  keepZeroFacets: false, // Don't keep facets with 0 results
+  // Optimize query parameters
+  primaryKey: 'id',
+  // Reduce the number of placeholders
+  placeholderSearch: false, // Don't search on empty query
+  // Limit results
+  finitePagination: true, // Enable finite pagination
+  paginationTotalHits: 1000, // Match backend limit
+})
 
 export const SEARCH_INDEX_NAME =
   process.env.NEXT_PUBLIC_INDEX_NAME || "products"
