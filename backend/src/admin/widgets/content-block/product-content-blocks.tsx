@@ -134,7 +134,14 @@ const ProductContentBlocksWidget = ({
         return d
       })
     )
-  }, [JSON.stringify(drafts.map((d) => ({ t: d.type, a: d.showAdvanced, tf: d.textForm, mf: d.mediaForm, sp: d.specsForm })))] )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    drafts.map(d => d.type).join(','),
+    drafts.map(d => d.showAdvanced).join(','),
+    JSON.stringify(drafts.map(d => d.textForm)),
+    JSON.stringify(drafts.map(d => d.mediaForm)),
+    JSON.stringify(drafts.map(d => d.specsForm))
+  ])
 
   const fetchBlocks = useCallback(async () => {
     if (!productId) return;
@@ -209,10 +216,10 @@ const ProductContentBlocksWidget = ({
         setError(`blockData không hợp lệ (JSON) ở block #${idx + 1}`);
         return;
       }
-      blocksPayload.push({ 
-        block_type: d.type, 
-        block_data: blockData, 
-        product_id: productId, 
+      blocksPayload.push({
+        block_type: d.type,
+        block_data: blockData,
+        product_id: productId,
         rank: startingRank + idx, // Use calculated rank instead of idx
         title: d.title || null,
         description: d.description || null
@@ -229,15 +236,24 @@ const ProductContentBlocksWidget = ({
         body: JSON.stringify({ blocks: blocksPayload }),
       });
       if (!res.ok) throw new Error(`Create failed: ${res.status}`);
+
+      const json = await res.json();
+      const newBlocks: AdminContentBlock[] = json?.data || [];
+
+      // Optimistic update: append new blocks to existing blocks instead of re-fetching
+      setBlocks((prev) => {
+        const combined = [...prev, ...newBlocks];
+        return combined.sort((a, b) => (a.rank || 0) - (b.rank || 0));
+      });
+
       setIsCreateOpen(false);
       setDrafts([]);
-      await fetchBlocks();
     } catch (e: any) {
       setError(e?.message || "Failed to create blocks");
     } finally {
       setIsSaving(false);
     }
-  }, [drafts, productId, fetchBlocks]);
+  }, [drafts, productId, blocks]);
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -249,9 +265,13 @@ const ProductContentBlocksWidget = ({
           credentials: "include",
         });
         if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
-        await fetchBlocks();
+
+        // Optimistic update: remove block from state instead of re-fetching
+        setBlocks((prev) => prev.filter((b) => b.id !== id));
       } catch (e: any) {
         setError(e?.message || "Failed to delete block");
+        // Refetch on error to restore correct state
+        await fetchBlocks();
       } finally {
         setIsSaving(false);
       }
@@ -290,9 +310,20 @@ const ProductContentBlocksWidget = ({
         body: JSON.stringify(updates),
       });
       if (!res.ok) throw new Error(`Update failed: ${res.status}`);
-      await fetchBlocks();
+
+      const json = await res.json();
+      const updatedBlock: AdminContentBlock = json?.data;
+
+      // Optimistic update: update block in state instead of re-fetching
+      if (updatedBlock) {
+        setBlocks((prev) =>
+          prev.map((b) => (b.id === id ? updatedBlock : b))
+        );
+      }
     } catch (e: any) {
       setError(e?.message || "Failed to update block");
+      // Refetch on error to restore correct state
+      await fetchBlocks();
     } finally {
       setIsSaving(false);
     }

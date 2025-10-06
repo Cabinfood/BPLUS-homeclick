@@ -51,15 +51,18 @@ const ProductModelUploadWidget = ({
     return modelUrl || "";
   }, [selectedFile, modelUrl]);
 
+  // Cleanup blob URLs properly
   useEffect(() => {
-    if (!selectedFile) return;
-    const objectUrl = previewUrl;
+    if (!selectedFile || !previewUrl.startsWith('blob:')) return;
+
     return () => {
       try {
-        URL.revokeObjectURL(objectUrl);
-      } catch {}
+        URL.revokeObjectURL(previewUrl);
+      } catch (e) {
+        console.error('Failed to revoke blob URL:', e);
+      }
     };
-  }, [selectedFile, previewUrl]);
+  }, [previewUrl, selectedFile]);
 
   const handleChooseFile = useCallback(() => {
     fileInputRef.current?.click();
@@ -84,6 +87,12 @@ const ProductModelUploadWidget = ({
 
   const handleUploadAndSave = useCallback(async () => {
     if (!selectedFile) return;
+
+    // Revoke previous blob URL before upload
+    if (previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
     try {
       setStatus("uploading");
 
@@ -139,7 +148,7 @@ const ProductModelUploadWidget = ({
       setStatus("error");
       setTimeout(() => setStatus("idle"), 2500);
     }
-  }, [product.id, product.metadata, selectedFile]);
+  }, [product.id, product.metadata, selectedFile, previewUrl]);
 
   const handleRemoveModel = useCallback(async () => {
     try {
