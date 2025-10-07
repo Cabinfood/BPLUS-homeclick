@@ -3,6 +3,16 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { HERO_SLIDE_MODULE } from "../../../../modules/hero-slide"
 import HeroSlideModuleService from "../../../../modules/hero-slide/service"
 
+type UpdateHeroSlideBody = {
+  title?: string
+  description?: string | null
+  image?: string
+  link?: string | null
+  cta_text?: string | null
+  rank?: number
+  is_active?: boolean
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse): Promise<void> {
   const svc: HeroSlideModuleService = req.scope.resolve(HERO_SLIDE_MODULE)
   const { id } = req.params
@@ -22,10 +32,10 @@ export async function GET(req: MedusaRequest, res: MedusaResponse): Promise<void
   }
 }
 
-export async function PUT(req: MedusaRequest, res: MedusaResponse): Promise<void> {
+export async function PUT(req: MedusaRequest<UpdateHeroSlideBody>, res: MedusaResponse): Promise<void> {
   const svc: HeroSlideModuleService = req.scope.resolve(HERO_SLIDE_MODULE)
   const { id } = req.params
-  const updates = req.body
+  const updates = req.body as UpdateHeroSlideBody
 
   try {
     const updated = await (svc as any).updateHeroSlides([{

@@ -3,6 +3,16 @@ import { MedusaError } from "@medusajs/framework/utils"
 import { HERO_SLIDE_MODULE } from "../../../modules/hero-slide"
 import HeroSlideModuleService from "../../../modules/hero-slide/service"
 
+type CreateHeroSlideBody = {
+  title: string
+  description?: string | null
+  image: string
+  link?: string | null
+  cta_text?: string | null
+  rank?: number
+  is_active?: boolean
+}
+
 export async function GET(req: MedusaRequest, res: MedusaResponse): Promise<void> {
   const svc: HeroSlideModuleService = req.scope.resolve(HERO_SLIDE_MODULE)
 
@@ -29,7 +39,7 @@ export async function GET(req: MedusaRequest, res: MedusaResponse): Promise<void
   }
 }
 
-export async function POST(req: MedusaRequest, res: MedusaResponse): Promise<void> {
+export async function POST(req: MedusaRequest<CreateHeroSlideBody>, res: MedusaResponse): Promise<void> {
   const svc: HeroSlideModuleService = req.scope.resolve(HERO_SLIDE_MODULE)
 
   const { title, description, image, link, cta_text, rank, is_active } = req.body
