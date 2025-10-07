@@ -1,3 +1,4 @@
+import { TruckFast } from "@medusajs/icons"
 import { Text } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
@@ -11,14 +12,11 @@ export default function Footer() {
             {/* Free Shipping */}
             <div className="flex flex-col items-center gap-3">
               <div className="w-12 h-12 flex items-center justify-center">
-                <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.25 18.75a1.5 1.5 0 01-3 0V8.25a1.5 1.5 0 013 0v10.5zM12 18.75a1.5 1.5 0 01-3 0V8.25a1.5 1.5 0 013 0v10.5zM15.75 18.75a1.5 1.5 0 01-3 0V8.25a1.5 1.5 0 013 0v10.5z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <TruckFast  />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-800">Free Shipping over USD $35</p>
-                <p className="text-xs text-gray-500">Free Fast-Delivery Upgrade</p>
+                <p className="text-sm font-medium text-gray-800">Giao nhanh</p>
+                <p className="text-xs text-gray-500">Freeship đơn 5TR</p>
               </div>
             </div>
 
@@ -30,7 +28,7 @@ export default function Footer() {
                 </svg>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-800">We accept credit cards, PayPal, Apple Pay, Affirm, and</p>
+                <p className="text-sm font-medium text-gray-800">Thanh toán an toàn</p>
                 <p className="text-xs text-gray-500">bank wires</p>
               </div>
             </div>
