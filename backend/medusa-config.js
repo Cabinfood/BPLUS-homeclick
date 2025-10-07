@@ -66,13 +66,12 @@ const medusaConfig = {
   },
   modules: [
     {
-      key: Modules.FILE,
-      resolve: '@medusajs/file',
+      resolve: '@medusajs/medusa/file',
       options: {
         providers: [
-          // Priority 1: Use R2 if configured
+          // Priority 1: Use R2 (S3-compatible) if configured
           ...(S3_FILE_URL && S3_ACCESS_KEY_ID && S3_SECRET_ACCESS_KEY ? [{
-            resolve: '@medusajs/file-s3',
+            resolve: '@medusajs/medusa/file-s3',
             id: 's3',
             options: {
               file_url: S3_FILE_URL,
@@ -83,20 +82,9 @@ const medusaConfig = {
               endpoint: S3_ENDPOINT,
             }
           }] :
-          // Priority 2: Fallback to MinIO
-          MINIO_ENDPOINT && MINIO_ACCESS_KEY && MINIO_SECRET_KEY ? [{
-            resolve: './src/modules/minio-file',
-            id: 'minio',
-            options: {
-              endPoint: MINIO_ENDPOINT,
-              accessKey: MINIO_ACCESS_KEY,
-              secretKey: MINIO_SECRET_KEY,
-              bucket: MINIO_BUCKET
-            }
-          }] :
-          // Priority 3: Fallback to local
+          // Priority 2: Fallback to local
           [{
-            resolve: '@medusajs/file-local',
+            resolve: '@medusajs/medusa/file-local',
             id: 'local',
             options: {
               upload_dir: 'static',

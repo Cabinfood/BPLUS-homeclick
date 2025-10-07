@@ -53,22 +53,6 @@ const nextConfig = {
         protocol: process.env.NEXT_PUBLIC_BASE_URL?.startsWith('https') ? 'https' : 'http',
         hostname: process.env.NEXT_PUBLIC_BASE_URL?.replace(/^https?:\/\//, ''),
       },
-      { // Note: only needed when using local-file for product media
-        protocol: "https",
-        hostname: process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL?.replace('https://', ''),
-      },
-      { // Note: can be removed after deleting demo products
-        protocol: "https",
-        hostname: "medusa-public-images.s3.eu-west-1.amazonaws.com",
-      },
-      { // Note: can be removed after deleting demo products
-        protocol: "https",
-        hostname: "medusa-server-testing.s3.amazonaws.com",
-      },
-      { // Note: can be removed after deleting demo products
-        protocol: "https",
-        hostname: "medusa-server-testing.s3.us-east-1.amazonaws.com",
-      },
       { // Note: can be removed after deleting demo products
         protocol: "https",
         hostname: "images.unsplash.com",
@@ -80,6 +64,10 @@ const nextConfig = {
       { // Note: Railway bucket storage for media
         protocol: "https",
         hostname: "bucket-production-d647.up.railway.app",
+      },
+      { // Note: Railway bucket storage for media
+        protocol: "https",
+        hostname: "pub-dbd0116f56fc4149a45bf9323e9e0ad0.r2.dev",
       },
     ],
     // Optimize image loading performance

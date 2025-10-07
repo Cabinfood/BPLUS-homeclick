@@ -168,9 +168,11 @@ const SlideForm = ({
       }
 
       const uploadResult = await uploadResponse.json()
-      const uploadedFileUrl = uploadResult.files[0]?.url
+      // Response is an array of uploaded files
+      const uploadedFileUrl = Array.isArray(uploadResult) ? uploadResult[0]?.url : uploadResult?.url
 
       if (!uploadedFileUrl) {
+        console.error('Upload result:', uploadResult)
         throw new Error('No file URL returned from upload')
       }
 

@@ -39,11 +39,11 @@ const LoginCustomizationWidget = () => {
           const svgElement = container.querySelector('svg') as SVGElement
           
           if (imgElement) {
-            imgElement.src = 'https://scontent.fsgn2-6.fna.fbcdn.net/v/t39.30808-6/493602769_1325070566293673_68252174675609987_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeF7alYJOLndqySrz54Mb-kgeaOGSHtH1DF5o4ZIe0fUMe8TLjYcwaq6PaOfllOG17E&_nc_ohc=uZ0SeWn29IEQ7kNvwHzNN9z&_nc_oc=AdnPEcY39ASK-M1HlOiHBqgdA6b4d29F6i91O-kBUCmpbQ1X7K0dOZHWg8axCiLbI9c&_nc_zt=23&_nc_ht=scontent.fsgn2-6.fna&_nc_gid=80WsDvcaWfRyl9zsHwqGHw&oh=00_AfbxXOHWCuf3v6Zsy7DpSArZ2bidHdeVlQ1xFJ94F49pNw&oe=68CAC17D'
+            imgElement.src = 'https://pub-dbd0116f56fc4149a45bf9323e9e0ad0.r2.dev/brand-assets/icon.jpg'
             imgElement.alt = 'HomeClick Logo'
           } else if (svgElement) {
             const newImg = document.createElement('img')
-            newImg.src = 'https://scontent.fsgn2-6.fna.fbcdn.net/v/t39.30808-6/493602769_1325070566293673_68252174675609987_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=6ee11a&_nc_eui2=AeF7alYJOLndqySrz54Mb-kgeaOGSHtH1DF5o4ZIe0fUMe8TLjYcwaq6PaOfllOG17E&_nc_ohc=uZ0SeWn29IEQ7kNvwHzNN9z&_nc_oc=AdnPEcY39ASK-M1HlOiHBqgdA6b4d29F6i91O-kBUCmpbQ1X7K0dOZHWg8axCiLbI9c&_nc_zt=23&_nc_ht=scontent.fsgn2-6.fna&_nc_gid=80WsDvcaWfRyl9zsHwqGHw&oh=00_AfbxXOHWCuf3v6Zsy7DpSArZ2bidHdeVlQ1xFJ94F49pNw&oe=68CAC17D'
+            newImg.src = 'https://pub-dbd0116f56fc4149a45bf9323e9e0ad0.r2.dev/brand-assets/icon.jpg'
             newImg.alt = 'HomeClick Logo'
             newImg.style.width = '64px'
             newImg.style.borderRadius = '50%'
