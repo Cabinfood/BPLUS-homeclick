@@ -298,4 +298,48 @@ export const getProductsListWithSortByCategoryId = cache(async function ({
   }
 })
 
+/**
+ * Get paginated products for client-side usage with TanStack Query
+ * Based on MedusaJS v2 Store API: https://docs.medusajs.com/api/store#products_getproducts
+ */
+export async function getProductsWithPagination({
+  limit = 12,
+  offset = 0,
+  regionId,
+  queryParams,
+}: {
+  limit?: number
+  offset?: number
+  regionId: string
+  queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
+}): Promise<{
+  products: HttpTypes.StoreProduct[]
+  count: number
+  limit: number
+  offset: number
+}> {
+  try {
+    const { products, count } = await sdk.store.product.list({
+      limit,
+      offset,
+      region_id: regionId,
+      fields: "*variants.calculated_price,+variants.inventory_quantity,+variants.metadata",
+      ...queryParams,
+    })
 
+    return {
+      products,
+      count,
+      limit,
+      offset,
+    }
+  } catch (error) {
+    console.error("Error fetching products with pagination:", error)
+    return {
+      products: [],
+      count: 0,
+      limit,
+      offset,
+    }
+  }
+}

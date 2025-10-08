@@ -32,7 +32,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                   className="relative h-full font-bold text-base flex items-center transition-all ease-out duration-200 focus:outline-none hover:text-ui-fg-base"
                 >
                   <BarsThree />
-                   Products
+                   Menu
                 </Popover.Button>
               </div>
 

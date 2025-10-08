@@ -1,8 +1,9 @@
 "use client"
 
-import { ChevronDownMini } from "@medusajs/icons"
-import { Select } from "@medusajs/ui"
-import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
+import { useState, useRef, useEffect } from "react"
+import { ChevronDown } from "lucide-react"
+
+export type SortOptions = "best_selling" | "created_at" | "price_asc" | "price_desc" | "discount"
 
 type SortDropdownProps = {
   sortBy: SortOptions
@@ -12,16 +13,24 @@ type SortDropdownProps = {
 
 const sortOptions = [
   {
-    value: "created_at",
-    label: "Latest Arrivals",
+    value: "best_selling" as SortOptions,
+    label: "Bán chạy",
   },
   {
-    value: "price_asc",
-    label: "Price: Low → High",
+    value: "created_at" as SortOptions,
+    label: "Mới nhất",
   },
   {
-    value: "price_desc",
-    label: "Price: High → Low",
+    value: "price_asc" as SortOptions,
+    label: "Giá thấp đến cao",
+  },
+  {
+    value: "price_desc" as SortOptions,
+    label: "Giá cao đến thấp",
+  },
+  {
+    value: "discount" as SortOptions,
+    label: "%Giảm giá nhiều",
   },
 ]
 
@@ -30,29 +39,57 @@ const SortDropdown = ({
   sortBy,
   setQueryParams,
 }: SortDropdownProps) => {
-  const handleChange = (value: string) => {
-    setQueryParams("sortBy", value as SortOptions)
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  const currentOption = sortOptions.find((option) => option.value === sortBy)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
+
+  const handleChange = (value: SortOptions) => {
+    setQueryParams("sortBy", value)
+    setIsOpen(false)
   }
 
-  const currentOption = sortOptions.find(option => option.value === sortBy)
-
   return (
-    <div className="flex items-center gap-2" data-testid={dataTestId}>
-      <span className="text-sm text-ui-fg-subtle whitespace-nowrap">Sort by:</span>
-      <Select value={sortBy} onValueChange={handleChange}>
-        <Select.Trigger className="w-[180px]">
-          <Select.Value>
-            {currentOption?.label || "Latest Arrivals"}
-          </Select.Value>
-        </Select.Trigger>
-        <Select.Content>
-          {sortOptions.map((option) => (
-            <Select.Item key={option.value} value={option.value}>
-              {option.label}
-            </Select.Item>
-          ))}
-        </Select.Content>
-      </Select>
+    <div className="flex items-center gap-3" data-testid={dataTestId}>
+      <span className="text-sm text-gray-500 uppercase tracking-wide whitespace-nowrap">
+        Sắp xếp theo
+      </span>
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-6 py-3 rounded-full text-gray-700 font-medium transition-colors"
+        >
+          {currentOption?.label || "Bán chạy"}
+          <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        </button>
+
+        {isOpen && (
+          <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-lg border border-gray-100 py-2 z-50">
+            {sortOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleChange(option.value)}
+                className={`w-full text-left px-6 py-3 hover:bg-gray-50 transition-colors ${
+                  option.value === sortBy ? "text-blue-600 font-medium" : "text-gray-700"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
