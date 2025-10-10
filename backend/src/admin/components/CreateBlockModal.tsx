@@ -275,11 +275,11 @@ export default function CreateBlockModal({
     <FocusModal open={isOpen} onOpenChange={onOpenChange}>
       <FocusModal.Content className="">
         <FocusModal.Header>
-          <FocusModal.Title>Content Block Editor</FocusModal.Title>
+          <FocusModal.Title className="text-xl font-semibold">Content Block Editor</FocusModal.Title>
         </FocusModal.Header>
         <FocusModal.Body className="flex p-0 h-full">
           {/* Left column - Blocks list (1/4) */}
-          <div className="w-1/4 border-r">
+          <div className="w-1/4 border-r">  
             <div className="flex flex-col h-full">
               {/* Existing blocks from DB */}
               {existingBlocks.length > 0 && (

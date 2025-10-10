@@ -12,6 +12,9 @@ import OptionSelect from "@modules/products/components/product-actions/option-se
 import MobileActions from "./mobile-actions"
 import ProductPrice from "../product-price"
 import StickyAddToCart from "../sticky-add-to-cart"
+import DiscountBadges from "../discount-badges"
+import CoolCashInfo from "../coolcash-info"
+import ServiceFeatures from "../service-features"
 import { addToCart } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
 
@@ -109,9 +112,26 @@ export default function ProductActions({
     setIsAdding(false)
   }
 
+  // Mock discount badges - in production, these would come from product metadata or promotions
+  const discountBadges = [
+    { label: "Giảm 60K", amount: "60000" },
+    { label: "Giảm 100K", amount: "100000" },
+    { label: "Giảm 50K", amount: "50000" }
+  ]
+
   return (
     <>
-      <div className="flex flex-col gap-y-2" ref={actionsRef}>
+      <div className="flex flex-col gap-y-4" ref={actionsRef}>
+        {/* Product Price */}
+        <ProductPrice product={product} variant={selectedVariant} />
+
+        {/* Discount Badges */}
+        <DiscountBadges badges={discountBadges} />
+
+        {/* CoolCash Info */}
+        <CoolCashInfo cashbackAmount={14000} minPurchase={200000} />
+
+        {/* Variant Options */}
         <div>
           {(product.variants?.length ?? 0) > 1 && (
             <div className="flex flex-col gap-y-4">
@@ -129,27 +149,28 @@ export default function ProductActions({
                   </div>
                 )
               })}
-              <Divider />
             </div>
           )}
         </div>
 
-        <ProductPrice product={product} variant={selectedVariant} />
-
+        {/* Add to Cart Button */}
         <Button
           onClick={handleAddToCart}
           disabled={!inStock || !selectedVariant || !!disabled || isAdding}
           variant="primary"
-          className="w-full h-10"
+          className="w-full h-12 text-base font-semibold"
           isLoading={isAdding}
           data-testid="add-product-button"
         >
           {!selectedVariant
-            ? "Select variant"
+            ? "Chọn phân loại"
             : !inStock
-            ? "Out of stock"
-            : "Add to cart"}
+            ? "Hết hàng"
+            : "Thêm vào giỏ"}
         </Button>
+
+        {/* Service Features */}
+        <ServiceFeatures />
         {/* Hide old MobileActions since we're using StickyAddToCart now */}
         {/* <MobileActions
           product={product}
