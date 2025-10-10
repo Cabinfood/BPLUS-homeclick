@@ -5,6 +5,7 @@ import { Container } from "@medusajs/ui"
 import Image from "next/image"
 import { useState, useEffect, Suspense, lazy } from "react"
 import { ChevronLeft, ChevronRight } from "@medusajs/icons"
+import { ImageIcon, Youtube, Rotate3d } from "lucide-react"
 import { useProductVariant } from "../product-variant-provider"
 import { VariantImage } from "types/global"
 
@@ -16,19 +17,6 @@ type VariantImageGalleryProps = {
 }
 
 type TabType = "photos" | "video" | "3d"
-
-// Custom SVG icons
-const PlayIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M8 5v14l11-7z"/>
-  </svg>
-)
-
-const BoxIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-  </svg>
-)
 
 const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
   const [activeTab, setActiveTab] = useState<TabType>("photos")
@@ -98,9 +86,9 @@ const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
   }, [selectedVariant, product])
 
   const tabs = [
-    { id: "photos" as TabType, label: "Photos", icon: null },
-    { id: "video" as TabType, label: "Intro", icon: <PlayIcon className="w-4 h-4" /> },
-    { id: "3d" as TabType, label: "3D", icon: <BoxIcon className="w-4 h-4" /> },
+    { id: "photos" as TabType, label: "Photos", icon: <ImageIcon className="w-4 h-4" /> },
+    { id: "video" as TabType, label: "Video", icon: <Youtube className="w-4 h-4" /> },
+    { id: "3d" as TabType, label: "3D Viewer", icon: <Rotate3d className="w-4 h-4" /> },
   ]
 
   const handlePrevious = () => {
@@ -141,7 +129,7 @@ const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
         return (
           <div className="flex justify-center items-center h-full bg-gray-100 rounded-lg">
             <div className="text-center">
-              <PlayIcon className="mx-auto mb-4 w-16 h-16 text-gray-400" />
+              <Youtube className="mx-auto mb-4 w-16 h-16 text-gray-400" />
               <p className="text-ui-fg-muted">Video content coming soon</p>
             </div>
           </div>
@@ -230,15 +218,15 @@ const VariantImageGallery = ({ product }: VariantImageGalleryProps) => {
 
       {/* Tab navigation */}
       <div className="flex justify-center">
-        <div className="flex p-1 rounded-full backdrop-blur-sm bg-black/80">
+        <div className="flex gap-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
                 activeTab === tab.id
-                  ? "bg-white text-black shadow-sm"
-                  : "text-white hover:text-gray-200"
+                  ? "bg-gray-900 text-white shadow-md"
+                  : "bg-transparent text-gray-700 hover:text-gray-900"
               }`}
             >
               {tab.icon}
