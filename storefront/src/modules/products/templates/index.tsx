@@ -15,6 +15,7 @@ import ProductInfo from "@modules/products/templates/product-info"
 import RenderBlocks from "@modules/products/components/content-block/render-blocks"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
 import { ProductVariantProvider } from "@modules/products/components/product-variant-provider"
+import Breadcrumb, { BreadcrumbItem } from "@modules/common/components/breadcrumb"
 
 // data
 import { getContentBlocksByProductId } from "@lib/data/content-block"
@@ -43,10 +44,40 @@ const ProductTemplate: React.FC<ProductTemplateProps> = async ({
     console.error('Failed to fetch content blocks:', error)
   }
 
+  // Build breadcrumb items
+  const breadcrumbItems: BreadcrumbItem[] = [
+    { label: "Trang chủ", href: "/" }
+  ]
+
+  // Add category if available
+  if (product.categories && product.categories.length > 0) {
+    const category = product.categories[0]
+    breadcrumbItems.push({
+      label: category.name,
+      href: `/store/categories/${category.handle}`
+    })
+  } else if (product.collection) {
+    // Fallback to collection if no category
+    breadcrumbItems.push({
+      label: product.collection.title,
+      href: `/collections/${product.collection.handle}`
+    })
+  }
+
+  // Add current product
+  breadcrumbItems.push({
+    label: product.title
+  })
+
   return (
     <ProductVariantProvider product={product}>
+      {/* Breadcrumb at the top */}
+      <div className="content-container pt-6">
+        <Breadcrumb items={breadcrumbItems} className="mb-2" />
+      </div>
+
       <div
-        className="flex relative flex-col gap-6 py-6 content-container lg:flex-row lg:items-start"
+        className="flex relative flex-col gap-6 pb-6 content-container lg:flex-row lg:items-start"
         data-testid="product-container"
       >
         {/* Left Column - Image Gallery (sticky) */}
@@ -57,16 +88,16 @@ const ProductTemplate: React.FC<ProductTemplateProps> = async ({
         {/* Right Column - Product Info, Tabs, and Actions */}
         <div className="flex flex-col gap-y-6 order-2 lg:order-2 w-full lg:w-[40%] lg:max-w-[480px]">
           <ProductInfo product={product} />
-          <ProductTabs product={product} />
+         
 
           {/* Desktop Product Actions */}
           <div className="hidden flex-col gap-y-6 lg:flex">
-            <ProductOnboardingCta />
             <ProductActionsWithVariant
               product={product}
               region={region}
             />
           </div>
+          <ProductTabs product={product} />
 
           {/* Mobile Product Actions - sticky bottom cart still applies globally */}
           <div className="lg:hidden">
