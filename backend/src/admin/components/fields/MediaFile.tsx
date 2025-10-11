@@ -6,6 +6,7 @@ import { useState, memo, useCallback, useEffect } from "react"
 export type MediaFileBlockData = {
   type: 'image' | 'video'
   url: string
+  thumbnail_url?: string // For video thumbnails
   alt?: string
   caption?: string
 }
@@ -35,6 +36,56 @@ const UPLOAD_BUTTON_LABELS = {
   image: 'Chọn ảnh',
   video: 'Chọn video'
 } as const
+
+// Helper function to generate video thumbnail
+const generateVideoThumbnail = (videoFile: File): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      reject(new Error('Cannot get canvas context'));
+      return;
+    }
+    
+    video.preload = 'metadata';
+    video.src = URL.createObjectURL(videoFile);
+    
+    video.onloadedmetadata = () => {
+      // Seek to 1 second or 5% of video duration
+      video.currentTime = Math.min(1, video.duration * 0.05);
+    };
+    
+    video.onseeked = () => {
+      // Set small thumbnail size (max 320px width)
+      const maxWidth = 320;
+      const scale = maxWidth / video.videoWidth;
+      canvas.width = maxWidth;
+      canvas.height = video.videoHeight * scale;
+      
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(video.src);
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to generate thumbnail'));
+          }
+        },
+        'image/jpeg',
+        0.7 // Compression quality
+      );
+    };
+    
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      reject(new Error('Failed to load video'));
+    };
+  });
+};
 
 const MediaFile = memo(function MediaFile({ value, onChange, validationError }: Props) {
   const [isUploading, setIsUploading] = useState(false)
@@ -88,11 +139,34 @@ const MediaFile = memo(function MediaFile({ value, onChange, validationError }: 
           throw new Error(`File không hợp lệ. Vui lòng chọn ${value.type === 'image' ? 'ảnh' : 'video'}`)
         }
 
-        // Sử dụng FormData với key 'files' như category-image-upload
+        // For videos, generate thumbnail first
+        let thumbnailUrl: string | undefined;
+        if (isValidVideo) {
+          try {
+            const thumbnailBlob = await generateVideoThumbnail(file);
+            const thumbnailFormData = new FormData();
+            thumbnailFormData.append('files', thumbnailBlob, `thumb_${file.name}.jpg`);
+            
+            const thumbRes = await fetch("/admin/uploads", {
+              method: "POST",
+              credentials: "include",
+              body: thumbnailFormData,
+            });
+            
+            if (thumbRes.ok) {
+              const thumbJson = await thumbRes.json();
+              thumbnailUrl = thumbJson.files?.[0]?.url;
+            }
+          } catch (thumbError) {
+            console.warn('Failed to generate thumbnail:', thumbError);
+            // Continue with video upload even if thumbnail fails
+          }
+        }
+
+        // Upload main file
         const formData = new FormData()
         formData.append('files', file)
 
-        // Sử dụng endpoint MedusaJS File Module như category-image-upload
         const res = await fetch("/admin/uploads", {
           method: "POST",
           credentials: "include",
@@ -105,12 +179,14 @@ const MediaFile = memo(function MediaFile({ value, onChange, validationError }: 
         }
 
         const json = await res.json()
-        // Xử lý response format như category-image-upload
         const uploadedFileUrl = json.files?.[0]?.url
         if (uploadedFileUrl) {
-          // Only update the URL, preserve other fields
-          onChange({ ...value, url: uploadedFileUrl })
-          // Update local state to reflect the change
+          // Update with URL and thumbnail_url if video
+          onChange({ 
+            ...value, 
+            url: uploadedFileUrl,
+            thumbnail_url: thumbnailUrl
+          })
           setLocalUrl(uploadedFileUrl)
         } else {
           throw new Error("No file URL returned from server")
@@ -124,7 +200,7 @@ const MediaFile = memo(function MediaFile({ value, onChange, validationError }: 
       }
     }
     input.click()
-  }, [value.type])
+  }, [value, onChange])
 
   const handleClear = useCallback(() => {
     onChange({ ...value, url: "" })
@@ -282,6 +358,76 @@ const MediaFile = memo(function MediaFile({ value, onChange, validationError }: 
           autoComplete="off"
         />
       </div>
+
+      {/* Preview section */}
+      {value.url && (
+        <div className="grid gap-2 p-4 bg-ui-bg-subtle rounded-lg border border-ui-border-base">
+          <Text size="small" weight="plus" className="text-ui-fg-subtle">
+            Preview
+          </Text>
+          {value.type === 'image' ? (
+            <div className="relative w-full overflow-hidden rounded-md bg-ui-bg-base">
+              <img
+                src={value.url}
+                alt={value.alt || 'Preview'}
+                className="w-full h-auto max-h-[400px] object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  target.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+              <div className="hidden p-8 text-center">
+                <Text size="small" className="text-ui-fg-muted">
+                  Không thể tải hình ảnh
+                </Text>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {/* Video thumbnail preview if available */}
+              {value.thumbnail_url && (
+                <div className="relative w-full overflow-hidden rounded-md bg-ui-bg-base">
+                  <img
+                    src={value.thumbnail_url}
+                    alt="Video thumbnail"
+                    className="w-full h-auto max-h-[200px] object-contain"
+                  />
+                  <Text size="xsmall" className="text-ui-fg-muted text-center mt-1">
+                    Thumbnail (320px)
+                  </Text>
+                </div>
+              )}
+              {/* Video player */}
+              <div className="relative w-full overflow-hidden rounded-md bg-ui-bg-base">
+                <video
+                  src={value.url}
+                  poster={value.thumbnail_url}
+                  controls
+                  className="w-full h-auto max-h-[400px]"
+                  onError={(e) => {
+                    const target = e.target as HTMLVideoElement;
+                    target.style.display = 'none';
+                    target.nextElementSibling?.classList.remove('hidden');
+                  }}
+                >
+                  Trình duyệt không hỗ trợ video
+                </video>
+                <div className="hidden p-8 text-center">
+                  <Text size="small" className="text-ui-fg-muted">
+                    Không thể tải video
+                  </Text>
+                </div>
+              </div>
+            </div>
+          )}
+          {value.caption && (
+            <Text size="small" className="text-ui-fg-subtle italic text-center">
+              {value.caption}
+            </Text>
+          )}
+        </div>
+      )}
     </div>
   )
 })
